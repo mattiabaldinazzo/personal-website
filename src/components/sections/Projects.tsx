@@ -39,10 +39,9 @@ type Project = ProjectLink | ProjectModal;
 const projects: Project[] = [
   {
     company: "iliad Space",
-    subtitle: "Canale di vendita multibrand",
     description:
-      "Ho contribuito allo sviluppo e al lancio di Iliad Space, il canale di vendita retail di Iliad Italia. Negli ultimi tre anni ho ricoperto il ruolo di Sales Project, Process & Support Leader, coordinando un team di 10 persone tra project management e CC Operations, guidando evoluzione del portale, processi e operations del canale.",
-    image: "/output.webp",
+      "Partecipazione allo sviluppo e gestione del canale di vendita iliad Space.",
+    image: "/iliadspace.webp",
     category: "lavorativi",
     modal: {
       title: "iliad Space",
