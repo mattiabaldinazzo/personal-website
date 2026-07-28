@@ -47,6 +47,8 @@ Optional detail card text, in markdown.
 
 Regole:
 
+I primi 6 progetti sono visibili, gli altri compaiono con "Mostra tutti i progetti". La soglia è la costante `PROGETTI_VISIBILI` in `build.py`, come `LIBRI_VISIBILI` per i libri.
+
 `titolo`, `categoria`, `descrizione` sono obbligatori. `categoria` può essere `personali`, `lavorativi`, `universitari` o una nuova: i filtri si aggiornano da soli. `immagine` è facoltativa: senza, la card mostra il titolo su fondo scuro. Se il file ha un corpo sotto il secondo `---`, la card apre la scheda di dettaglio (il `link` compare come bottone in fondo). Se non ha corpo, la card apre direttamente il `link`. Ogni scheda di dettaglio ha un URL diretto: `https://mattiabaldinazzo.it/#progetto-nome-progetto`.
 
 ## Aggiungere un progresso
@@ -92,7 +94,7 @@ Tutti e quattro i campi sono obbligatori, `voto` da 1 a 5. I primi 4 libri sono 
 
 ## Cambiare la foto profilo
 
-La foto della sezione Chi sono sta in `images/profilo/`, il nome del file è libero: il build usa l'unica immagine presente nella cartella. Per cambiarla elimina quella attuale, aggiungi la nuova e fai commit. Regole e formato consigliato sono in `images/profilo/LEGGIMI.md`. Con zero immagini o più di una il build fallisce e ti avvisa.
+La foto della sezione "Chi sono" sta in `images/profilo/`, il nome del file è libero: il build usa l'unica immagine presente nella cartella. Per cambiarla elimina quella attuale, aggiungi la nuova e fai commit. Regole e formato consigliato sono in `images/profilo/LEGGIMI.md`. Con zero immagini o più di una il build fallisce e ti avvisa.
 
 ## Immagini
 
@@ -111,6 +113,12 @@ Committa i file generati insieme all'originale. Se te ne dimentichi il sito funz
 
 Push su `main`: il workflow esegue `python3 build.py`, genera `_site/` con le due lingue e pubblica su GitHub Pages. Se un file markdown ha errori (campo mancante, numero non valido, immagine inesistente) il build fallisce con l'elenco dei problemi e il sito online resta quello precedente. In Settings, Pages la source deve essere "GitHub Actions".
 
+## Cose che il build fa da solo
+
+L'anno finale del footer (`2020-...`) è quello del giorno in cui pubblichi, quindi non va aggiornato a mano. Il numero progressivo delle schede progetto, la percentuale dei progressi, la mappa delle lingue e la sitemap sono tutti calcolati dai contenuti.
+
+`cv.pdf` nella radice è un segnaposto: sostituiscilo con il tuo curriculum vero mantenendo il nome del file.
+
 ## Anteprima locale
 
 ```bash
@@ -122,4 +130,4 @@ Poi apri http://localhost:8000. Serve solo Python 3, nessuna dipendenza.
 
 ## Struttura
 
-`content/` i contenuti in markdown (progetti, progressi, libri) e i testi dell'interfaccia in `content/testi/`. `templates/index.html` la struttura della pagina, unica per entrambe le lingue. `build.py` il generatore (solo libreria standard). `styles.css` e `main.js` stile e comportamenti; il CSS viene incorporato nella pagina dal build, così il browser non deve scaricare un secondo file prima di disegnare. `tools/` gli script di manutenzione. `fonts/` iA Writer Quattro S e Mono S più Parisienne ridotto alle lettere del monogramma M.B., tutti self-hosted con licenza SIL OFL. `images/` le immagini ottimizzate, con `images/profilo/` per la foto. `jet_converter/` tool indipendente, pubblicato così com'è. `_site/` output generato, non si committa.
+`content/` i contenuti in markdown (progetti, progressi, libri) e i testi dell'interfaccia in `content/testi/`. `templates/index.html` la struttura della pagina, unica per entrambe le lingue. `build.py` il generatore (solo libreria standard). `styles.css` e `main.js` stile e comportamenti; il CSS viene compresso e incorporato nella pagina dal build, così il browser non deve scaricare un secondo file prima di disegnare; il sorgente resta commentato, si riduce solo quello che viene spedito. `tools/` gli script di manutenzione. `fonts/` iA Writer Quattro S e Mono S più Parisienne ridotto alle lettere del monogramma M.B., tutti self-hosted con licenza SIL OFL. `images/` le immagini ottimizzate, con `images/profilo/` per la foto. `jet_converter/` tool indipendente, pubblicato così com'è. `_site/` output generato, non si committa.
