@@ -1,6 +1,8 @@
 /* =========================================================
    Mattia Baldinazzo - main.js
    Vanilla JS, nessuna dipendenza. Tutto progressive enhancement.
+   I testi (menu, libri) arrivano dagli attributi data-* del markup,
+   quindi questo file resta identico in italiano e in inglese.
    ========================================================= */
 (function () {
   'use strict';
@@ -11,10 +13,6 @@
 
   /* ---- Reveal allo scroll (per primo: il contenuto non resta mai nascosto) ---- */
   var reveals = doc.querySelectorAll('.reveal');
-  var heroReveals = doc.querySelectorAll('.hero .reveal');
-  for (var i = 0; i < heroReveals.length; i++) {
-    heroReveals[i].style.setProperty('--d', (i * 0.07).toFixed(2) + 's');
-  }
   if (!('IntersectionObserver' in window)) {
     reveals.forEach(function (el) { el.classList.add('is-visible'); });
   } else {
@@ -30,9 +28,16 @@
   }
 
   /* ---- Bordo header allo scroll ---- */
-  function onScroll() {
+  var inAttesa = false;
+  function aggiornaHeader() {
+    inAttesa = false;
     if (!header) { return; }
     header.classList.toggle('is-scrolled', window.scrollY > 8);
+  }
+  function onScroll() {
+    if (inAttesa) { return; }
+    inAttesa = true;
+    window.requestAnimationFrame(aggiornaHeader);
   }
   onScroll();
   window.addEventListener('scroll', onScroll, { passive: true });
@@ -43,7 +48,7 @@
     header.classList.remove('menu-open');
     if (menuToggle) {
       menuToggle.setAttribute('aria-expanded', 'false');
-      menuToggle.setAttribute('aria-label', 'Apri il menu');
+      menuToggle.setAttribute('aria-label', menuToggle.getAttribute('data-testo-apri') || '');
     }
   }
   function openMenu() {
@@ -51,7 +56,7 @@
     header.classList.add('menu-open');
     if (menuToggle) {
       menuToggle.setAttribute('aria-expanded', 'true');
-      menuToggle.setAttribute('aria-label', 'Chiudi il menu');
+      menuToggle.setAttribute('aria-label', menuToggle.getAttribute('data-testo-chiudi') || '');
     }
   }
   if (menuToggle && header) {
@@ -69,19 +74,39 @@
     });
   }
 
-  /* ---- Filtro progetti ---- */
+  /* ---- Filtro progetti e "Mostra tutti i progetti" ----
+     Due condizioni indipendenti decidono se una scheda si vede: la categoria
+     scelta e la soglia di quante schede mostrare. Le calcolo insieme a ogni
+     cambiamento, cosi' filtro ed espansione non si pestano i piedi. */
   var filterBtns = doc.querySelectorAll('[data-filter]');
   var works = doc.querySelectorAll('[data-works] .work');
   var emptyMsg = doc.querySelector('[data-works-empty]');
-  function applyFilter(cat) {
-    var visible = 0;
+  var worksToggle = doc.querySelector('[data-works-toggle]');
+  var limite = worksToggle ? parseInt(worksToggle.getAttribute('data-limite'), 10) : 0;
+  var categoria = 'tutti';
+  var espanso = false;
+
+  function aggiornaProgetti() {
+    var visibili = [];
     works.forEach(function (w) {
-      var show = (cat === 'tutti' || w.getAttribute('data-category') === cat);
-      w.classList.toggle('is-hidden', !show);
-      if (show) { visible++; }
+      var match = (categoria === 'tutti' || w.getAttribute('data-category') === categoria);
+      if (match) { visibili.push(w); }
+      w.classList.toggle('is-hidden', !match);
     });
-    if (emptyMsg) { emptyMsg.hidden = (visible !== 0); }
+    if (worksToggle && limite > 0) {
+      visibili.forEach(function (w, i) {
+        w.classList.toggle('is-hidden', !espanso && i >= limite);
+      });
+      var serve = visibili.length > limite;
+      worksToggle.parentNode.hidden = !serve;
+      worksToggle.setAttribute('aria-expanded', String(espanso));
+      worksToggle.textContent = espanso
+        ? (worksToggle.getAttribute('data-testo-meno') || '')
+        : (worksToggle.getAttribute('data-testo-tutti') || '');
+    }
+    if (emptyMsg) { emptyMsg.hidden = (visibili.length !== 0); }
   }
+
   filterBtns.forEach(function (btn) {
     btn.addEventListener('click', function () {
       filterBtns.forEach(function (b) {
@@ -90,9 +115,18 @@
       });
       btn.classList.add('is-active');
       btn.setAttribute('aria-pressed', 'true');
-      applyFilter(btn.getAttribute('data-filter'));
+      categoria = btn.getAttribute('data-filter');
+      aggiornaProgetti();
     });
   });
+
+  if (worksToggle) {
+    worksToggle.addEventListener('click', function () {
+      espanso = !espanso;
+      aggiornaProgetti();
+    });
+  }
+  aggiornaProgetti();
 
   /* ---- Mostra tutti i libri ---- */
   var booksToggle = doc.querySelector('[data-books-toggle]');
@@ -102,7 +136,9 @@
       var expanded = booksToggle.getAttribute('aria-expanded') === 'true';
       hiddenBooks.forEach(function (b) { b.classList.toggle('is-hidden', expanded); });
       booksToggle.setAttribute('aria-expanded', String(!expanded));
-      booksToggle.textContent = expanded ? 'Mostra tutti i libri' : 'Mostra meno';
+      booksToggle.textContent = expanded
+        ? (booksToggle.getAttribute('data-testo-tutti') || '')
+        : (booksToggle.getAttribute('data-testo-meno') || '');
     });
   }
 

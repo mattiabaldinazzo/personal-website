@@ -1,7 +1,10 @@
 ---
+
 titolo: iliad Space
+titolo_en: iliad Space
 categoria: lavorativi
 descrizione: Sviluppo e gestione del canale di vendita retail iliad Space.
+descrizione_en: Building and running the iliad Space retail sales channel.
 immagine: /images/projects/iliadspace.webp
 ---
 
@@ -20,3 +23,21 @@ Negli ultimi tre anni ho ricoperto il ruolo di Sales Project, Process & Support 
 - implementazione di nuove funzionalità e ottimizzazione dei processi operativi
 - coordinamento del supporto operativo e amministrativo alla rete
 - gestione delle attività per garantire efficienza, qualità del servizio e crescita del canale
+
+--- en ---
+
+iliad Space is the retail distribution channel that lets customers activate and manage iliad offers through a network of mobile phone shops across the country, with the goal of widening the operator's physical presence and making it easier for users to reach it.
+
+I worked on the early development of the project and on the launch of the channel, contributing to the definition of the operating model and to building the portal that supports the sales network.
+
+Over the past three years I have held the role of Sales Project, Process & Support Leader, responsible for the evolution, stability and scalability of the channel. In this role I coordinated a team of 10 people:
+
+- 4 people dedicated to project management
+- 6 people dedicated to CC Operations
+
+## Areas of responsibility
+
+- continuous development and improvement of the portal and its software components
+- rollout of new features and optimisation of operating processes
+- coordination of operational and administrative support to the network
+- managing activities to ensure efficiency, service quality and channel growth

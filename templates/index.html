@@ -1,38 +1,38 @@
 <!doctype html>
-<html lang="it">
+<html lang="{{LANG}}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#FAF9F5">
 
-  <title>Mattia Baldinazzo | Project &amp; Process Manager e Developer</title>
-  <meta name="description" content="Mattia Baldinazzo, Project &amp; Process Manager e Developer a Milano. Processi, sviluppo software, intelligenza artificiale e open source.">
+  <title>{{T_META_TITOLO}}</title>
+  <meta name="description" content="{{T_META_DESCRIZIONE}}">
   <meta name="author" content="Mattia Baldinazzo">
-  <link rel="canonical" href="https://mattiabaldinazzo.it/">
+  <link rel="canonical" href="{{URL_PAGINA}}">
+  <link rel="alternate" hreflang="it" href="{{URL_IT}}">
+  <link rel="alternate" hreflang="en" href="{{URL_EN}}">
+  <link rel="alternate" hreflang="x-default" href="{{URL_IT}}">
 
   <meta property="og:type" content="website">
-  <meta property="og:locale" content="it_IT">
-  <meta property="og:url" content="https://mattiabaldinazzo.it/">
-  <meta property="og:title" content="Mattia Baldinazzo | Project &amp; Process Manager e Developer">
-  <meta property="og:description" content="Project &amp; Process Manager e Developer a Milano. Processi, sviluppo software, AI e open source.">
+  <meta property="og:locale" content="{{LANG}}">
+  <meta property="og:url" content="{{URL_PAGINA}}">
+  <meta property="og:title" content="{{T_META_TITOLO}}">
+  <meta property="og:description" content="{{T_META_DESCRIZIONE_SOCIAL}}">
   <meta property="og:image" content="https://mattiabaldinazzo.it{{FOTO_PROFILO}}">
   <meta property="og:image:alt" content="Mattia Baldinazzo">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Mattia Baldinazzo | Project &amp; Process Manager e Developer">
-  <meta name="twitter:description" content="Project &amp; Process Manager e Developer a Milano.">
+  <meta name="twitter:title" content="{{T_META_TITOLO}}">
+  <meta name="twitter:description" content="{{T_META_DESCRIZIONE_SOCIAL}}">
   <meta name="twitter:image" content="https://mattiabaldinazzo.it{{FOTO_PROFILO}}">
 
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="apple-touch-icon" href="/favicon.svg">
 
-  <link rel="preload" href="/fonts/iAWriterQuattroS-Regular.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="/fonts/iAWriterQuattroS-Bold.woff2" as="font" type="font/woff2" crossorigin>
-
   <script>document.documentElement.classList.add('js');</script>
-  <link rel="stylesheet" href="/styles.css">
+  <style>{{STILI}}</style>
 
   <script type="application/ld+json">
   {
@@ -41,7 +41,7 @@
     "name": "Mattia Baldinazzo",
     "url": "https://mattiabaldinazzo.it",
     "image": "https://mattiabaldinazzo.it{{FOTO_PROFILO}}",
-    "jobTitle": "Project & Process Manager",
+    "jobTitle": "{{T_META_RUOLO}}",
     "email": "mailto:mattia.baldinazzo@gmail.com",
     "address": { "@type": "PostalAddress", "addressLocality": "Milano", "addressCountry": "IT" },
     "sameAs": [
@@ -52,36 +52,45 @@
   </script>
 </head>
 <body id="top">
-  <a class="skip-link" href="#home">Salta al contenuto</a>
+  <a class="skip-link" href="#home">{{T_SALTA_AL_CONTENUTO}}</a>
 
   <header class="site-header" data-header>
     <div class="container nav">
-      <a class="brand" href="#home" aria-label="Mattia Baldinazzo, home">MB</a>
+      <a class="brand" href="#home" aria-label="{{T_TORNA_HOME}}">M.B.</a>
 
-      <nav class="nav-links" aria-label="Navigazione principale">
-        <a href="#chi-sono">Chi sono</a>
-        <a href="#lavori">Lavori</a>
-        <a href="#progressi">Progressi</a>
-        <a href="#letture">Letture</a>
-        <a href="#contatti">Contatti</a>
+      <nav class="nav-links" aria-label="{{T_NAV_ARIA}}">
+        <a href="#chi-sono">{{T_NAV_CHI_SONO}}</a>
+        <a href="#lavori">{{T_NAV_LAVORI}}</a>
+        <a href="#progressi">{{T_NAV_PROGRESSI}}</a>
+        <a href="#letture">{{T_NAV_LETTURE}}</a>
+        <a href="#contatti">{{T_NAV_CONTATTI}}</a>
       </nav>
 
-      <a class="btn btn-primary nav-cta" href="https://cal.com/mattiabaldinazzo" target="_blank" rel="noopener">Prenota una call</a>
+      <div class="nav-end">
+        <a class="lang-toggle" href="{{URL_ALTRA_LINGUA}}" hreflang="{{T_ALTRA_LINGUA_CODICE}}" aria-label="{{T_ALTRA_LINGUA_ARIA}}" data-lang="{{LANG}}">
+          <span class="lang-knob" aria-hidden="true"></span>
+          <span class="lang-opt" data-opt="it">{{T_ETICHETTA_IT}}</span>
+          <span class="lang-opt" data-opt="en">{{T_ETICHETTA_EN}}</span>
+        </a>
 
-      <button class="menu-toggle" type="button" aria-label="Apri il menu" aria-expanded="false" aria-controls="mobile-menu" data-menu-toggle>
-        <span class="menu-bars" aria-hidden="true"></span>
-      </button>
+        <a class="btn btn-primary nav-cta" href="https://cal.com/mattiabaldinazzo" target="_blank" rel="noopener">{{T_CTA_CALL}}</a>
+
+        <button class="menu-toggle" type="button" aria-label="{{T_MENU_APRI}}" aria-expanded="false" aria-controls="mobile-menu"
+                data-menu-toggle data-testo-apri="{{T_MENU_APRI}}" data-testo-chiudi="{{T_MENU_CHIUDI}}">
+          <span class="menu-bars" aria-hidden="true"></span>
+        </button>
+      </div>
     </div>
 
     <div class="mobile-menu" id="mobile-menu">
-      <nav aria-label="Navigazione mobile">
-        <a href="#chi-sono">Chi sono</a>
-        <a href="#lavori">Lavori</a>
-        <a href="#progressi">Progressi</a>
-        <a href="#letture">Letture</a>
-        <a href="#contatti">Contatti</a>
+      <nav aria-label="{{T_NAV_ARIA_MOBILE}}">
+        <a href="#chi-sono">{{T_NAV_CHI_SONO}}</a>
+        <a href="#lavori">{{T_NAV_LAVORI}}</a>
+        <a href="#progressi">{{T_NAV_PROGRESSI}}</a>
+        <a href="#letture">{{T_NAV_LETTURE}}</a>
+        <a href="#contatti">{{T_NAV_CONTATTI}}</a>
       </nav>
-      <a class="btn btn-primary" href="https://cal.com/mattiabaldinazzo" target="_blank" rel="noopener">Prenota una call</a>
+      <a class="btn btn-primary" href="https://cal.com/mattiabaldinazzo" target="_blank" rel="noopener">{{T_CTA_CALL}}</a>
     </div>
   </header>
 
@@ -89,19 +98,18 @@
     <!-- HERO -->
     <section class="hero" id="home">
       <div class="container">
-        <p class="eyebrow reveal">Profilo</p>
         <h1 class="hero-name reveal">Mattia<br>Baldinazzo</h1>
-        <p class="hero-lead reveal">Project &amp; Process Manager. Developer. AI enthusiast.<span class="type-cursor" aria-hidden="true"></span></p>
+        <p class="hero-lead reveal">{{T_HERO_LEAD}}<span class="type-cursor" aria-hidden="true"></span></p>
         <p class="hero-meta reveal">
           <span class="status-dot" aria-hidden="true"></span>
-          <span>Disponibile a nuove opportunità</span>
-          <span class="sep">Milano, Italia</span>
+          <span>{{T_HERO_STATO}}</span>
+          <span class="sep">{{T_HERO_LUOGO}}</span>
         </p>
         <div class="hero-actions reveal">
-          <a class="btn btn-primary" href="https://cal.com/mattiabaldinazzo" target="_blank" rel="noopener">Prenota una call</a>
-          <a class="btn btn-ghost" href="mailto:mattia.baldinazzo@gmail.com">Scrivimi</a>
+          <a class="btn btn-primary" href="https://cal.com/mattiabaldinazzo" target="_blank" rel="noopener">{{T_CTA_CALL}}</a>
+          <a class="btn btn-ghost" href="mailto:mattia.baldinazzo@gmail.com">{{T_CTA_SCRIVIMI}}</a>
         </div>
-        <ul class="inline-social reveal" aria-label="Profili social">
+        <ul class="inline-social reveal" aria-label="{{T_SOCIAL_ARIA}}">
           <li><a href="https://www.linkedin.com/in/mattiabaldinazzo" target="_blank" rel="noopener">LinkedIn</a></li>
           <li><a href="https://github.com/mattiabaldinazzo" target="_blank" rel="noopener">GitHub</a></li>
         </ul>
@@ -112,36 +120,36 @@
     <section class="section" id="chi-sono">
       <div class="container">
         <header class="section-head reveal">
-          <p class="eyebrow">Chi sono</p>
-          <h2 class="section-title">Tecnologia al servizio dei processi</h2>
+          <p class="eyebrow">{{T_NAV_CHI_SONO}}</p>
+          <h2 class="section-title">{{T_CHI_SONO_TITOLO}}</h2>
         </header>
 
         <div class="about-grid">
           <figure class="about-photo reveal">
-            <img src="{{FOTO_PROFILO}}" alt="Mattia Baldinazzo" loading="lazy" decoding="async">
+            {{FOTO_TAG}}
           </figure>
 
           <div class="about-text reveal">
-            <p>Lavoro come Project &amp; Process Manager in una multinazionale. Vengo dal mondo dello sviluppo software e dell'informatica, ambiti che continuo a praticare con un approccio pratico e orientato all'efficienza.</p>
-            <p>Mi appassionano l'intelligenza artificiale e l'open source, soprattutto quando diventano strumenti concreti per migliorare processi, prodotti e organizzazione del lavoro. Mi interessa capire come la tecnologia possa semplificare, automatizzare e rendere scalabili le attività reali.</p>
-            <p>I miei interessi sono trasversali e spaziano tra tecnologia, processi e sistemi digitali. Se vuoi confrontarti, scrivimi.</p>
+            <p>{{T_CHI_SONO_P1}}</p>
+            <p>{{T_CHI_SONO_P2}}</p>
+            <p>{{T_CHI_SONO_P3}}</p>
 
             <dl class="skills">
               <div class="skill">
-                <dt>Sales &amp; Marketing</dt>
-                <dd>Strategie di vendita e marketing digitale</dd>
+                <dt>{{T_SKILL1_TITOLO}}</dt>
+                <dd>{{T_SKILL1_TESTO}}</dd>
               </div>
               <div class="skill">
-                <dt>Development</dt>
-                <dd>Sviluppo siti web e applicazioni</dd>
+                <dt>{{T_SKILL2_TITOLO}}</dt>
+                <dd>{{T_SKILL2_TESTO}}</dd>
               </div>
               <div class="skill">
-                <dt>Open Source</dt>
-                <dd>Contributi e progetti per la community</dd>
+                <dt>{{T_SKILL3_TITOLO}}</dt>
+                <dd>{{T_SKILL3_TESTO}}</dd>
               </div>
               <div class="skill">
-                <dt>AI &amp; Innovation</dt>
-                <dd>Intelligenza artificiale e nuove tecnologie</dd>
+                <dt>{{T_SKILL4_TITOLO}}</dt>
+                <dd>{{T_SKILL4_TESTO}}</dd>
               </div>
             </dl>
           </div>
@@ -153,12 +161,12 @@
     <section class="section" id="lavori">
       <div class="container">
         <header class="section-head reveal">
-          <p class="eyebrow">Lavori</p>
-          <h2 class="section-title">Una selezione di progetti</h2>
-          <p class="section-intro">Alcuni dei miei lavori recenti. La lista completa è su <a href="https://github.com/mattiabaldinazzo/works" target="_blank" rel="noopener">GitHub</a>.</p>
+          <p class="eyebrow">{{T_NAV_LAVORI}}</p>
+          <h2 class="section-title">{{T_LAVORI_TITOLO}}</h2>
+          <p class="section-intro">{{LAVORI_INTRO}}</p>
         </header>
 
-        <div class="filters reveal" aria-label="Filtra i progetti">
+        <div class="filters reveal" role="group" aria-label="{{T_LAVORI_FILTRI_ARIA}}">
           {{FILTERS}}
         </div>
 
@@ -166,7 +174,9 @@
           {{WORKS}}
         </ol>
 
-        <p class="works-empty" data-works-empty hidden>Nessun progetto in questa categoria, per ora.</p>
+        <p class="works-empty" data-works-empty hidden>{{T_LAVORI_VUOTO}}</p>
+
+        {{WORKS_MORE}}
       </div>
     </section>
 
@@ -174,9 +184,9 @@
     <section class="section" id="progressi">
       <div class="container">
         <header class="section-head reveal">
-          <p class="eyebrow">Progressi</p>
-          <h2 class="section-title">Cosa sto imparando</h2>
-          <p class="section-intro">Alcune tra le cose a cui mi sono attualmente affezionato.</p>
+          <p class="eyebrow">{{T_NAV_PROGRESSI}}</p>
+          <h2 class="section-title">{{T_PROGRESSI_TITOLO}}</h2>
+          <p class="section-intro">{{T_PROGRESSI_INTRO}}</p>
         </header>
 
         <ul class="progress-list">
@@ -189,9 +199,9 @@
     <section class="section" id="letture">
       <div class="container">
         <header class="section-head reveal">
-          <p class="eyebrow">Letture</p>
-          <h2 class="section-title">Libri che mi hanno formato</h2>
-          <p class="section-intro">Una selezione delle letture che mi hanno ispirato.</p>
+          <p class="eyebrow">{{T_NAV_LETTURE}}</p>
+          <h2 class="section-title">{{T_LETTURE_TITOLO}}</h2>
+          <p class="section-intro">{{T_LETTURE_INTRO}}</p>
         </header>
 
         <ul class="books-grid" data-books>
@@ -206,17 +216,17 @@
     <section class="section" id="contatti">
       <div class="container">
         <header class="section-head reveal">
-          <p class="eyebrow">Contatti</p>
-          <h2 class="section-title">Parliamone</h2>
-          <p class="section-intro">Scrivimi o prenota una call. Sono aperto a nuove opportunità e collaborazioni.</p>
+          <p class="eyebrow">{{T_NAV_CONTATTI}}</p>
+          <h2 class="section-title">{{T_CONTATTI_TITOLO}}</h2>
+          <p class="section-intro">{{T_CONTATTI_INTRO}}</p>
         </header>
 
         <div class="contact-actions reveal">
-          <a class="btn btn-primary" href="https://cal.com/mattiabaldinazzo" target="_blank" rel="noopener">Prenota una call</a>
-          <a class="btn btn-ghost" href="mailto:mattia.baldinazzo@gmail.com">Scrivimi</a>
+          <a class="btn btn-primary" href="https://cal.com/mattiabaldinazzo" target="_blank" rel="noopener">{{T_CTA_CALL}}</a>
+          <a class="btn btn-ghost" href="mailto:mattia.baldinazzo@gmail.com">{{T_CTA_SCRIVIMI}}</a>
         </div>
 
-        <ul class="inline-social reveal" aria-label="Profili social">
+        <ul class="inline-social reveal" aria-label="{{T_SOCIAL_ARIA}}">
           <li><a href="https://www.linkedin.com/in/mattiabaldinazzo" target="_blank" rel="noopener">LinkedIn</a></li>
           <li><a href="https://github.com/mattiabaldinazzo" target="_blank" rel="noopener">GitHub</a></li>
         </ul>
@@ -226,13 +236,13 @@
 
   <footer class="site-footer">
     <div class="container footer-inner">
-      <a class="brand" href="#home" aria-label="Torna alla home">MB</a>
-      <p class="footer-copy">&copy; 2020 Mattia Baldinazzo</p>
-      <ul class="footer-social" aria-label="Profili social">
+      <a class="brand" href="#home" aria-label="{{T_TORNA_HOME}}">M.B.</a>
+      <p class="footer-copy">&copy; 2020-{{ANNO}} Mattia Baldinazzo</p>
+      <ul class="footer-social" aria-label="{{T_SOCIAL_ARIA}}">
         <li><a href="https://www.linkedin.com/in/mattiabaldinazzo" target="_blank" rel="noopener">LinkedIn</a></li>
         <li><a href="https://github.com/mattiabaldinazzo" target="_blank" rel="noopener">GitHub</a></li>
       </ul>
-      <a class="to-top" href="#top">Torna su</a>
+      <a class="to-top" href="#top">{{T_TORNA_SU}}</a>
     </div>
   </footer>
 
