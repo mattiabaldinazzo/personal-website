@@ -128,19 +128,24 @@
   }
   aggiornaProgetti();
 
-  /* ---- Mostra tutti i libri ---- */
-  var booksToggle = doc.querySelector('[data-books-toggle]');
-  if (booksToggle) {
-    var hiddenBooks = doc.querySelectorAll('[data-books] .book.is-hidden');
-    booksToggle.addEventListener('click', function () {
-      var expanded = booksToggle.getAttribute('aria-expanded') === 'true';
-      hiddenBooks.forEach(function (b) { b.classList.toggle('is-hidden', expanded); });
-      booksToggle.setAttribute('aria-expanded', String(!expanded));
-      booksToggle.textContent = expanded
-        ? (booksToggle.getAttribute('data-testo-tutti') || '')
-        : (booksToggle.getAttribute('data-testo-meno') || '');
+  /* ---- "Mostra tutti" di libri e progressi ----
+     Stesso comportamento per due sezioni diverse: gli elementi oltre la
+     soglia nascono con la classe is-hidden e il bottone la toglie. */
+  function collegaMostraTutti(selettoreBottone, selettoreNascosti) {
+    var bottone = doc.querySelector(selettoreBottone);
+    if (!bottone) { return; }
+    var nascosti = doc.querySelectorAll(selettoreNascosti);
+    bottone.addEventListener('click', function () {
+      var aperto = bottone.getAttribute('aria-expanded') === 'true';
+      nascosti.forEach(function (el) { el.classList.toggle('is-hidden', aperto); });
+      bottone.setAttribute('aria-expanded', String(!aperto));
+      bottone.textContent = aperto
+        ? (bottone.getAttribute('data-testo-tutti') || '')
+        : (bottone.getAttribute('data-testo-meno') || '');
     });
   }
+  collegaMostraTutti('[data-books-toggle]', '[data-books] .book.is-hidden');
+  collegaMostraTutti('[data-progress-toggle]', '[data-progress] .progress.is-hidden');
 
   /* ---- Modali (generate dal build per ogni progetto con dettaglio) ---- */
   var lastFocused = null;

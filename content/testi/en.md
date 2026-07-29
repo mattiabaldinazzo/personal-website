@@ -66,7 +66,14 @@ lavori_vuoto: No projects in this category yet.
 modale_chiudi: Close
 
 progressi_titolo: What I am learning
+progressi_totale: Overall progress
 progressi_intro: A few things I am currently attached to.
+
+progressi_mostra_tutti: Show all progress
+progressi_mostra_meno: Show less
+sforzo_alto: High effort
+sforzo_medio: Moderate effort
+sforzo_basso: Low effort
 
 letture_titolo: Books that shaped me
 letture_intro: A selection of the reads that inspired me.

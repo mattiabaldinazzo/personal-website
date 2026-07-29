@@ -68,7 +68,63 @@ unita_en: lessons
 ---
 ```
 
+I primi 4 progressi sono visibili, gli altri compaiono con "Mostra tutti i progressi". La soglia è la costante `PROGRESSI_VISIBILI` in `build.py`.
+
 Tutti i campi sono obbligatori tranne `unita`, che è l'etichetta mostrata accanto ai numeri (lezioni, capitoli, km). `raggiunto` e `totale` sono numeri; `raggiunto` deve stare tra 0 e `totale`. L'esempio sopra mostra "8/10 lezioni" e "80%". Quando finisci, porta `raggiunto` al valore di `totale` oppure elimina il file.
+
+### Dividere un progresso in parti
+
+Quando lo stesso argomento cresce e vuoi tenerne separati i pezzi, non creare un secondo file: aggiungi le parti dentro quello che hai già. Il frontmatter tiene solo il titolo dell'argomento e ogni parte si apre con una riga `--- parte ---`, seguita dagli stessi campi di prima.
+
+```markdown
+---
+titolo: N8N
+titolo_en: N8N
+---
+
+--- parte ---
+titolo: Parte 1
+titolo_en: Part 1
+descrizione: Imparare ad automatizzare l'operatività in locale tramite N8N.
+descrizione_en: Learning to automate day-to-day work locally with N8N.
+raggiunto: 5
+totale: 10
+unita: lezioni
+unita_en: lessons
+
+--- parte ---
+titolo: Parte 2
+titolo_en: Part 2
+descrizione: Collegare N8N ai sistemi aziendali e gestire gli errori.
+descrizione_en: Connecting N8N to business systems and handling failures.
+raggiunto: 10
+totale: 20
+unita: lezioni
+unita_en: lessons
+```
+
+Il sito mostra il titolo dell'argomento con l'avanzamento totale e una barra spessa, poi ogni parte con la sua percentuale, la sua quota e la sua barra sottile.
+
+L'avanzamento totale è la somma dei `raggiunto` diviso la somma dei `totale`, quindi una parte più lunga pesa di più: 2 lezioni su 2 più 0 su 100 danno 2%, non 50%. Se le parti usano unità diverse il build ti avvisa, perché in quel caso la somma mescola grandezze diverse.
+
+Le parti non hanno limite di numero. Una `descrizione` nel frontmatter dell'argomento è facoltativa e compare sopra le parti come introduzione. I file senza `--- parte ---` continuano a funzionare come prima, non c'è niente da convertire.
+
+Se scrivi una sola `--- parte ---`, il sito mostra la forma semplice: il totale coinciderebbe con quella parte e la stessa percentuale comparirebbe due volte. Titolo, numeri e descrizione sono quelli della parte, il titolo mostrato è quello dell'argomento. Aggiungendo la seconda parte compare da sola la vista con l'avanzamento totale.
+
+La riga dell'avanzamento totale mostra soltanto la percentuale, mai una quota o un'unità: le parti possono contare cose diverse (lezioni, video, capitoli) e sommarle in una sola etichetta non avrebbe senso.
+
+### Colore della barra ed etichetta di sforzo
+
+Due campi facoltativi, validi sia nel frontmatter dell'argomento sia dentro una `--- parte ---`.
+
+```markdown
+colore: "#7A3E9D"
+sforzo: alto
+```
+
+`colore` cambia la barra di completamento e si scrive in esadecimale, con o senza abbreviazione (`#7A3E9D` o `#7A9`). Scritto nel frontmatter vale per la barra del totale e per tutte le parti che non ne indicano uno proprio; scritto dentro una parte vale solo per quella. Senza il campo la barra usa il blu del sito. Un valore che non è un esadecimale blocca il build.
+
+`sforzo` aggiunge sotto al titolo una pastiglia colorata e accetta solo `alto`, `medio` o `basso`. I testi sono nei file delle lingue, chiavi `sforzo_alto`, `sforzo_medio` e `sforzo_basso`: oggi dicono "Più difficile del previsto", "Fattibile dai" e "La smarchiamo facilmente", in inglese "High effort", "Moderate effort" e "Low effort". Cambiali lì se vuoi altre formule. Il colore accompagna la lettura ma l'informazione sta nel testo, così resta chiara anche a chi i colori non li distingue.
 
 ## Aggiungere un libro
 

@@ -60,8 +60,8 @@
 
       <nav class="nav-links" aria-label="{{T_NAV_ARIA}}">
         <a href="#chi-sono">{{T_NAV_CHI_SONO}}</a>
-        <a href="#lavori">{{T_NAV_LAVORI}}</a>
         <a href="#progressi">{{T_NAV_PROGRESSI}}</a>
+        <a href="#lavori">{{T_NAV_LAVORI}}</a>
         <a href="#letture">{{T_NAV_LETTURE}}</a>
         <a href="#contatti">{{T_NAV_CONTATTI}}</a>
       </nav>
@@ -85,8 +85,8 @@
     <div class="mobile-menu" id="mobile-menu">
       <nav aria-label="{{T_NAV_ARIA_MOBILE}}">
         <a href="#chi-sono">{{T_NAV_CHI_SONO}}</a>
-        <a href="#lavori">{{T_NAV_LAVORI}}</a>
         <a href="#progressi">{{T_NAV_PROGRESSI}}</a>
+        <a href="#lavori">{{T_NAV_LAVORI}}</a>
         <a href="#letture">{{T_NAV_LETTURE}}</a>
         <a href="#contatti">{{T_NAV_CONTATTI}}</a>
       </nav>
@@ -157,6 +157,23 @@
       </div>
     </section>
 
+    <!-- PROGRESSI -->
+    <section class="section" id="progressi">
+      <div class="container">
+        <header class="section-head reveal">
+          <p class="eyebrow">{{T_NAV_PROGRESSI}}</p>
+          <h2 class="section-title">{{T_PROGRESSI_TITOLO}}</h2>
+          <p class="section-intro">{{T_PROGRESSI_INTRO}}</p>
+        </header>
+
+        <ul class="progress-list" data-progress>
+          {{PROGRESS}}
+        </ul>
+
+        {{PROGRESS_MORE}}
+      </div>
+    </section>
+
     <!-- LAVORI -->
     <section class="section" id="lavori">
       <div class="container">
@@ -177,21 +194,6 @@
         <p class="works-empty" data-works-empty hidden>{{T_LAVORI_VUOTO}}</p>
 
         {{WORKS_MORE}}
-      </div>
-    </section>
-
-    <!-- PROGRESSI -->
-    <section class="section" id="progressi">
-      <div class="container">
-        <header class="section-head reveal">
-          <p class="eyebrow">{{T_NAV_PROGRESSI}}</p>
-          <h2 class="section-title">{{T_PROGRESSI_TITOLO}}</h2>
-          <p class="section-intro">{{T_PROGRESSI_INTRO}}</p>
-        </header>
-
-        <ul class="progress-list">
-          {{PROGRESS}}
-        </ul>
       </div>
     </section>
 

@@ -728,19 +728,82 @@ section[id] { scroll-margin-top: calc(var(--header-h) + 16px); }
   background: var(--line);
   overflow: hidden;
 }
+/* Il colore della barra si puo' cambiare da ogni singolo file di contenuto:
+   il build scrive --barra nello stile in linea, qui c'e' solo il valore
+   predefinito. */
 .progress-fill {
   display: block;
   height: 100%;
   width: 100%;
   transform-origin: left center;
   transform: scaleX(var(--p, 0));
-  background: var(--accent);
+  background: var(--barra, var(--accent));
   border-radius: inherit;
 }
 /* Si riempie quando la voce entra in vista, animando transform: cosi' il
    browser non ricalcola il layout a ogni fotogramma. */
 html.js .progress .progress-fill { transform: scaleX(0); transition: transform 0.9s var(--ease) 0.15s; }
 html.js .progress.is-visible .progress-fill { transform: scaleX(var(--p, 0)); }
+/* Le sotto-parti si riempiono una dopo l'altra, per far leggere l'ordine */
+html.js .progress.is-visible .progress-part:nth-child(2) .progress-fill { transition-delay: 0.3s; }
+html.js .progress.is-visible .progress-part:nth-child(3) .progress-fill { transition-delay: 0.45s; }
+html.js .progress.is-visible .progress-part:nth-child(4) .progress-fill { transition-delay: 0.6s; }
+
+/* ---- Progresso diviso in sotto-parti ----
+   La barra dell'argomento e' piu' spessa di quelle delle singole parti: lo
+   spessore dice quale numero riassume gli altri. Le parti stanno in una
+   colonna rientrata, marcata da un filo verticale, cosi' si capisce a colpo
+   d'occhio che appartengono al titolo sopra. */
+.progress--gruppo > .progress-track { height: 8px; }
+.progress-parts {
+  display: grid;
+  gap: 1.15rem;
+  margin: 1.15rem 0 0;
+  padding-left: 1rem;
+  border-left: 1px solid var(--line);
+}
+.progress-part-title {
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.progress-part .progress-desc { margin: 0.3rem 0 0.7rem; font-size: 0.875rem; }
+.progress-track--sm { height: 4px; }
+.progress.is-hidden { display: none; }
+.progress-more { margin-top: 2.25rem; }
+
+/* Pastiglia che dice quanta fatica costa. Il colore aiuta la lettura veloce
+   ma l'informazione sta nel testo, cosi' resta leggibile anche a chi i
+   colori non li distingue. Le tinte sono scurite quanto basta per stare
+   sopra il rapporto di contrasto 4.5:1 sulla carta del sito. */
+.progress-effort {
+  display: inline-block;
+  margin: 0.45rem 0 0;
+  padding: 0.2rem 0.55rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  line-height: 1.4;
+  border: 1px solid;
+  border-radius: 999px;
+}
+.progress-effort--alto {
+  color: #a5231c;
+  background: rgba(179, 38, 30, 0.08);
+  border-color: rgba(179, 38, 30, 0.3);
+}
+.progress-effort--medio {
+  color: #7a5200;
+  background: rgba(168, 106, 0, 0.1);
+  border-color: rgba(168, 106, 0, 0.32);
+}
+.progress-effort--basso {
+  color: #2a6f35;
+  background: rgba(47, 125, 59, 0.1);
+  border-color: rgba(47, 125, 59, 0.3);
+}
+.progress-effort + .progress-desc { margin-top: 0.55rem; }
 
 /* ---------- Letture ---------- */
 .books-grid {

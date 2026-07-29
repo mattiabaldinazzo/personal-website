@@ -66,7 +66,14 @@ lavori_vuoto: Nessun progetto in questa categoria, per ora.
 modale_chiudi: Chiudi
 
 progressi_titolo: Cosa sto imparando
+progressi_totale: Avanzamento totale
 progressi_intro: Alcune tra le cose a cui mi sono attualmente affezionato.
+
+progressi_mostra_tutti: Mostra tutti i progressi
+progressi_mostra_meno: Mostra meno
+sforzo_alto: Più difficile del previsto
+sforzo_medio: Fattibile dai
+sforzo_basso: La smarchiamo facilmente
 
 letture_titolo: Libri che mi hanno formato
 letture_intro: Una selezione delle letture che mi hanno ispirato.

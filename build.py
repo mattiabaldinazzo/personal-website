@@ -53,12 +53,16 @@ STATIC_DIRS = ["images", "fonts", "jet_converter"]
 # Quanti elementi restano visibili prima del bottone "Mostra tutti"
 LIBRI_VISIBILI = 4
 PROGETTI_VISIBILI = 6
+PROGRESSI_VISIBILI = 4
 
 # Estensioni ammesse per la foto profilo
 ESTENSIONI_FOTO = {".webp", ".jpg", ".jpeg", ".png"}
 
 # Separatore che divide la parte italiana da quella inglese nel corpo
 SEPARATORE_EN = re.compile(r"^\s*---\s*en\s*---\s*$", re.MULTILINE)
+
+# Separatore che apre una sotto-parte dentro un progresso
+SEPARATORE_PARTE = re.compile(r"^\s*---\s*parte\s*---\s*$", re.MULTILINE)
 
 # Ordine dei filtri per le categorie note; le nuove vengono accodate
 CATEGORIE_NOTE = ["personali", "lavorativi", "universitari"]
@@ -199,6 +203,21 @@ def leggi_md(path):
                     k, v = riga.split(":", 1)
                     meta[k.strip().lower()] = v.strip().strip('"').strip("'")
     return meta, corpo.strip()
+
+
+def blocco_campi(testo):
+    """Legge righe 'chiave: valore' e le restituisce come dizionario.
+    Serve alle sotto-parti dei progressi, scritte con la stessa sintassi
+    del frontmatter ma dentro il corpo del file."""
+    campi = {}
+    for riga in testo.strip().splitlines():
+        riga = riga.strip()
+        if not riga or riga.startswith("#"):
+            continue
+        if ":" in riga:
+            k, v = riga.split(":", 1)
+            campi[k.strip().lower()] = v.strip().strip('"').strip("'")
+    return campi
 
 
 def campo(meta, chiave, lingua):
@@ -415,33 +434,150 @@ def carica_libri():
     return libri
 
 
+COLORE_HEX = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
+SFORZI = ("alto", "medio", "basso")
+
+
+def leggi_colore(campi, origine, etichetta):
+    """Colore della barra, scritto in esadecimale. Vuoto significa: usa il
+    colore d'accento del sito."""
+    grezzo = campi.get("colore", "").strip()
+    if not grezzo:
+        return ""
+    if not COLORE_HEX.match(grezzo):
+        errore("%s%s: 'colore' deve essere un esadecimale tipo #1F3A5F (trovato: %r)"
+               % (origine.name, etichetta, grezzo))
+        return ""
+    return grezzo
+
+
+def leggi_sforzo(campi, origine, etichetta):
+    """Quanto costa fatica: alto, medio o basso. Vuoto significa: nessuna
+    etichetta."""
+    grezzo = campi.get("sforzo", "").strip().lower()
+    if not grezzo:
+        return ""
+    if grezzo not in SFORZI:
+        errore("%s%s: 'sforzo' puo' essere solo %s (trovato: %r)"
+               % (origine.name, etichetta, " / ".join(SFORZI), grezzo))
+        return ""
+    return grezzo
+
+
+def leggi_avanzamento(campi, origine, etichetta):
+    """Valida raggiunto/totale e restituisce (raggiunto, totale) oppure None."""
+    raggiunto = numero(campi, "raggiunto", origine)
+    totale = numero(campi, "totale", origine)
+    if raggiunto is None or totale is None:
+        return None
+    if totale <= 0:
+        errore("%s%s: 'totale' deve essere maggiore di zero" % (origine.name, etichetta))
+        return None
+    if not 0 <= raggiunto <= totale:
+        errore("%s%s: 'raggiunto' deve stare tra 0 e 'totale' (%s)"
+               % (origine.name, etichetta, testo_numero(totale)))
+        return None
+    return raggiunto, totale
+
+
 def carica_progressi():
+    """Un progresso puo' essere semplice oppure diviso in sotto-parti.
+
+    Semplice: descrizione, raggiunto, totale e unita' stanno nel frontmatter,
+    esattamente come prima. Nulla da cambiare nei file gia' scritti.
+
+    Con sotto-parti: il frontmatter tiene solo il titolo dell'argomento e ogni
+    parte si apre nel corpo con una riga '--- parte ---', seguita dagli stessi
+    campi. L'avanzamento complessivo e' la somma dei raggiunti diviso la somma
+    dei totali, quindi una parte piu' lunga pesa di piu'.
+    """
     cartella = CONTENT / "progressi"
     voci = []
     if not cartella.exists():
         return voci
     for f in sorted(cartella.glob("*.md")):
-        meta, _ = leggi_md(f)
-        for c in ("titolo", "descrizione", "raggiunto", "totale"):
+        meta, corpo = leggi_md(f)
+        if not meta.get("titolo"):
+            errore("%s: manca il campo 'titolo'" % f.name)
+        if manca_traduzione(meta, "titolo"):
+            avviso("%s: manca 'titolo_en', in inglese uso il titolo italiano" % f.name)
+
+        pezzi = SEPARATORE_PARTE.split(corpo)
+        blocchi_parte = [b for b in pezzi[1:] if b.strip()]
+
+        # ---------------------------------------- progresso con sotto-parti
+        if blocchi_parte:
+            parti = []
+            somma_raggiunto = somma_totale = 0.0
+            unita_viste = set()
+            for n, grezzo in enumerate(blocchi_parte, start=1):
+                campi = blocco_campi(grezzo)
+                etichetta = ", parte %d" % n
+                for c in ("titolo", "descrizione", "raggiunto", "totale"):
+                    if not campi.get(c):
+                        errore("%s%s: manca il campo '%s'" % (f.name, etichetta, c))
+                valori = leggi_avanzamento(campi, f, etichetta)
+                if valori is None:
+                    continue
+                raggiunto, totale = valori
+                for c in ("titolo", "descrizione"):
+                    if manca_traduzione(campi, c):
+                        avviso("%s%s: manca '%s_en', in inglese uso il testo italiano"
+                               % (f.name, etichetta, c))
+                somma_raggiunto += raggiunto
+                somma_totale += totale
+                unita_viste.add(campi.get("unita", ""))
+                parti.append({
+                    "meta": campi,
+                    "percento": round(raggiunto / totale * 100),
+                    "quota": "%s/%s" % (testo_numero(raggiunto), testo_numero(totale)),
+                    "colore": leggi_colore(campi, f, etichetta) or leggi_colore(meta, f, ""),
+                    "sforzo": leggi_sforzo(campi, f, etichetta),
+                })
+            if not parti or somma_totale <= 0:
+                continue
+            if len(unita_viste) > 1:
+                avviso("%s: le sotto-parti usano unita' diverse (%s), quindi la somma "
+                       "che calcolo per l'avanzamento totale mescola grandezze diverse"
+                       % (f.name, ", ".join(sorted(u or "senza unita'" for u in unita_viste))))
+            # Una sola parte non ha nulla da riassumere: il totale
+            # coinciderebbe con la parte stessa e il numero comparirebbe due
+            # volte. In quel caso mostro la forma semplice, con il titolo
+            # dell'argomento e i dati della parte.
+            if len(parti) == 1:
+                unica = parti[0]
+                unica["meta"]["titolo"] = meta.get("titolo", "")
+                unica["meta"]["titolo_en"] = meta.get("titolo_en", "")
+                unica["parti"] = []
+                voci.append(unica)
+                continue
+            voci.append({
+                "meta": meta,
+                "percento": round(somma_raggiunto / somma_totale * 100),
+                "quota": "",
+                "parti": parti,
+                "colore": leggi_colore(meta, f, ""),
+                "sforzo": leggi_sforzo(meta, f, ""),
+            })
+            continue
+
+        # ---------------------------------------- progresso semplice
+        for c in ("descrizione", "raggiunto", "totale"):
             if not meta.get(c):
                 errore("%s: manca il campo '%s'" % (f.name, c))
-        raggiunto = numero(meta, "raggiunto", f)
-        totale = numero(meta, "totale", f)
-        if raggiunto is None or totale is None:
+        valori = leggi_avanzamento(meta, f, "")
+        if valori is None:
             continue
-        if totale <= 0:
-            errore("%s: 'totale' deve essere maggiore di zero" % f.name)
-            continue
-        if not 0 <= raggiunto <= totale:
-            errore("%s: 'raggiunto' deve stare tra 0 e 'totale' (%s)" % (f.name, testo_numero(totale)))
-            continue
-        for c in ("titolo", "descrizione"):
-            if manca_traduzione(meta, c):
-                avviso("%s: manca '%s_en', in inglese uso il testo italiano" % (f.name, c))
+        raggiunto, totale = valori
+        if manca_traduzione(meta, "descrizione"):
+            avviso("%s: manca 'descrizione_en', in inglese uso il testo italiano" % f.name)
         voci.append({
             "meta": meta,
             "percento": round(raggiunto / totale * 100),
             "quota": "%s/%s" % (testo_numero(raggiunto), testo_numero(totale)),
+            "parti": [],
+            "colore": leggi_colore(meta, f, ""),
+            "sforzo": leggi_sforzo(meta, f, ""),
         })
     return voci
 
@@ -598,30 +734,114 @@ def render_toggle_libri(libri, T):
                                 esc(T["libri_mostra_tutti"])))
 
 
-def render_progressi(voci, lingua):
+def quota_con_unita(voce, lingua):
+    """Es. '5/10 lezioni'."""
+    quota = voce["quota"]
+    unita = campo(voce["meta"], "unita", lingua)
+    return quota + " " + unita if unita else quota
+
+
+def barra(percento, etichetta, colore="", piccola=False):
+    stile = "--p:%.2f" % (percento / 100.0)
+    if colore:
+        stile += ";--barra:%s" % colore
+    return ('<div class="progress-track%(sm)s" role="progressbar" aria-valuemin="0" '
+            'aria-valuemax="100" aria-valuenow="%(pct)d" aria-label="%(lab)s: %(pct)d%%">'
+            '<span class="progress-fill" style="%(stile)s"></span></div>'
+            % {"sm": " progress-track--sm" if piccola else "", "pct": percento,
+               "lab": esc(etichetta), "stile": esc(stile)})
+
+
+def etichetta_sforzo(sforzo, T):
+    """Pastiglia colorata che dice quanta fatica costa. Il colore da solo non
+    basta a chi non lo distingue, quindi l'informazione sta nel testo."""
+    if not sforzo:
+        return ""
+    return ('<p class="progress-effort progress-effort--%s">%s</p>\n'
+            % (sforzo, esc(T["sforzo_" + sforzo])))
+
+
+def render_progressi(voci, lingua, T):
     righe = []
-    for v in voci:
-        quota = v["quota"]
-        unita = campo(v["meta"], "unita", lingua)
-        if unita:
-            quota += " " + unita
+    for i, v in enumerate(voci, start=1):
         titolo = campo(v["meta"], "titolo", lingua)
+        nascosto = " is-hidden" if i > PROGRESSI_VISIBILI else ""
+
+        if v["parti"]:
+            parti_html = []
+            for parte in v["parti"]:
+                titolo_parte = campo(parte["meta"], "titolo", lingua)
+                parti_html.append(
+                    '<li class="progress-part">\n'
+                    '                <div class="progress-head">\n'
+                    '                  <h4 class="progress-part-title">%(titolo)s</h4>\n'
+                    '                  <p class="progress-value"><span class="progress-quota">%(quota)s</span>'
+                    '<span class="progress-percent">%(pct)d%%</span></p>\n'
+                    '                </div>\n'
+                    '                %(sforzo)s'
+                    '<p class="progress-desc">%(desc)s</p>\n'
+                    '                %(barra)s\n'
+                    '              </li>'
+                    % {"titolo": esc(titolo_parte),
+                       "quota": esc(quota_con_unita(parte, lingua)),
+                       "pct": parte["percento"],
+                       "sforzo": etichetta_sforzo(parte["sforzo"], T),
+                       "desc": esc(campo(parte["meta"], "descrizione", lingua)),
+                       "barra": barra(parte["percento"], "%s, %s" % (titolo, titolo_parte),
+                                      parte["colore"], piccola=True)}
+                )
+            intro = campo(v["meta"], "descrizione", lingua)
+            righe.append(
+                '<li class="progress progress--gruppo reveal%(nascosto)s">\n'
+                '            <div class="progress-head">\n'
+                '              <h3 class="progress-title">%(titolo)s</h3>\n'
+                '              <p class="progress-value"><span class="progress-quota">%(totale)s</span>'
+                '<span class="progress-percent">%(pct)d%%</span></p>\n'
+                '            </div>\n'
+                '            %(sforzo)s'
+                '%(intro)s'
+                '            %(barra)s\n'
+                '            <ol class="progress-parts">\n'
+                '              %(parti)s\n'
+                '            </ol>\n'
+                '          </li>'
+                % {"nascosto": nascosto, "titolo": esc(titolo),
+                   "totale": esc(T["progressi_totale"]), "pct": v["percento"],
+                   "sforzo": etichetta_sforzo(v["sforzo"], T),
+                   "intro": ('            <p class="progress-desc">%s</p>\n' % esc(intro)) if intro else "",
+                   "barra": barra(v["percento"], "%s, %s" % (titolo, T["progressi_totale"]), v["colore"]),
+                   "parti": "\n              ".join(parti_html)}
+            )
+            continue
+
         righe.append(
-            '<li class="progress reveal">\n'
+            '<li class="progress reveal%(nascosto)s">\n'
             '            <div class="progress-head">\n'
             '              <h3 class="progress-title">%(titolo)s</h3>\n'
-            '              <p class="progress-value"><span class="progress-quota">%(quota)s</span><span class="progress-percent">%(pct)d%%</span></p>\n'
+            '              <p class="progress-value"><span class="progress-quota">%(quota)s</span>'
+            '<span class="progress-percent">%(pct)d%%</span></p>\n'
             '            </div>\n'
-            '            <p class="progress-desc">%(desc)s</p>\n'
-            '            <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="%(pct)d" aria-label="%(titolo)s: %(pct)d%%">\n'
-            '              <span class="progress-fill" style="--p:%(scala).2f"></span>\n'
-            '            </div>\n'
-            '          </li>' % {"titolo": esc(titolo), "quota": esc(quota),
-                                "desc": esc(campo(v["meta"], "descrizione", lingua)),
-                                "pct": v["percento"],
-                                "scala": v["percento"] / 100.0}
+            '            %(sforzo)s'
+            '<p class="progress-desc">%(desc)s</p>\n'
+            '            %(barra)s\n'
+            '          </li>'
+            % {"nascosto": nascosto, "titolo": esc(titolo),
+               "quota": esc(quota_con_unita(v, lingua)), "pct": v["percento"],
+               "sforzo": etichetta_sforzo(v["sforzo"], T),
+               "desc": esc(campo(v["meta"], "descrizione", lingua)),
+               "barra": barra(v["percento"], titolo, v["colore"])}
         )
     return "\n          ".join(righe)
+
+
+def render_toggle_progressi(voci, T):
+    if len(voci) <= PROGRESSI_VISIBILI:
+        return ""
+    return ('<div class="progress-more reveal">\n'
+            '          <button class="btn btn-ghost" type="button" data-progress-toggle aria-expanded="false"\n'
+            '                  data-testo-tutti="%s" data-testo-meno="%s">%s</button>\n'
+            '        </div>' % (esc(T["progressi_mostra_tutti"]), esc(T["progressi_mostra_meno"]),
+                                esc(T["progressi_mostra_tutti"])))
 
 
 # --------------------------------------------------------------------- build
@@ -655,7 +875,8 @@ def costruisci_pagina(modello, lingua, sottocartella, testi, progetti, libri, pr
         "WORKS_MORE": render_toggle_progetti(progetti, T),
         "ANNO": str(datetime.date.today().year),
         "MODALS": render_modali(progetti, lingua, T),
-        "PROGRESS": render_progressi(progressi, lingua),
+        "PROGRESS": render_progressi(progressi, lingua, T),
+        "PROGRESS_MORE": render_toggle_progressi(progressi, T),
         "BOOKS": render_libri(libri, lingua, T),
         "BOOKS_MORE": render_toggle_libri(libri, T),
         "LAVORI_INTRO": inline_md(T["lavori_intro"]),
