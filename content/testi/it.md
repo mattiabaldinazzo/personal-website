@@ -77,8 +77,9 @@ sforzo_basso: La smarchiamo facilmente
 
 letture_titolo: Libri che mi hanno formato
 letture_intro: Una selezione delle letture che mi hanno ispirato.
-libri_mostra_tutti: Mostra tutti i libri
+libri_mostra_altro: Mostra altro
 libri_mostra_meno: Mostra meno
+libri_aggiunti: Libri aggiunti: %s
 libri_copertina: Copertina di
 libri_voto: Valutazione %s su 5
 

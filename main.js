@@ -128,9 +128,9 @@
   }
   aggiornaProgetti();
 
-  /* ---- "Mostra tutti" di libri e progressi ----
-     Stesso comportamento per due sezioni diverse: gli elementi oltre la
-     soglia nascono con la classe is-hidden e il bottone la toglie. */
+  /* ---- "Mostra tutti" dei progressi ----
+     Gli elementi oltre la soglia nascono con la classe is-hidden e il
+     bottone la toglie. */
   function collegaMostraTutti(selettoreBottone, selettoreNascosti) {
     var bottone = doc.querySelector(selettoreBottone);
     if (!bottone) { return; }
@@ -144,8 +144,117 @@
         : (bottone.getAttribute('data-testo-meno') || '');
     });
   }
-  collegaMostraTutti('[data-books-toggle]', '[data-books] .book.is-hidden');
   collegaMostraTutti('[data-progress-toggle]', '[data-progress] .progress.is-hidden');
+
+  /* ---- Libreria: righe visibili, "Mostra altro" e "Mostra meno" ----
+     Le righe dipendono dalla larghezza dello schermo, quindi si contano qui
+     dopo l'impaginazione. Ogni elemento di una mensola occupa uno spazio alto
+     quanto la riga: gli elementi con la stessa posizione verticale formano una
+     riga. Senza JavaScript i bottoni restano nascosti e si vede tutta la
+     libreria. "Mostra meno" compare dal primo clic e torna subito alle righe
+     iniziali. */
+  var libreria = doc.querySelector('[data-libreria]');
+  var libreriaAzioni = doc.querySelector('[data-libreria-azioni]');
+  if (libreria && libreriaAzioni) {
+    var bottoneAltro = libreriaAzioni.querySelector('[data-libreria-altro]');
+    var bottoneMeno = libreriaAzioni.querySelector('[data-libreria-meno]');
+    var annuncio = doc.querySelector('[data-libreria-annuncio]');
+    var mensole = libreria.querySelectorAll('.mensola');
+    var righeIniziali = parseInt(libreria.getAttribute('data-righe'), 10) || 3;
+    var righePerClic = parseInt(libreria.getAttribute('data-righe-clic'), 10) || 3;
+    var righeMostrate = righeIniziali;
+    var larghezzaNota = libreria.clientWidth;
+    var attesaResize = 0;
+
+    var contaRighe = function () {
+      var righe = [];
+      mensole.forEach(function (mensola) {
+        mensola.hidden = false;
+        Array.prototype.forEach.call(mensola.children, function (el) { el.hidden = false; });
+      });
+      mensole.forEach(function (mensola) {
+        var cima = null;
+        Array.prototype.forEach.call(mensola.children, function (el) {
+          if (el.offsetTop !== cima) {
+            righe.push([]);
+            cima = el.offsetTop;
+          }
+          righe[righe.length - 1].push(el);
+        });
+      });
+      return righe;
+    };
+
+    var aggiornaLibreria = function () {
+      var righe = contaRighe();
+      var totale = righe.length;
+      righeMostrate = Math.max(righeIniziali, Math.min(righeMostrate, totale));
+      righe.forEach(function (riga, i) {
+        if (i >= righeMostrate) {
+          riga.forEach(function (el) { el.hidden = true; });
+        }
+      });
+      mensole.forEach(function (mensola) {
+        mensola.hidden = !Array.prototype.some.call(mensola.children, function (el) { return !el.hidden; });
+      });
+      libreriaAzioni.hidden = totale <= righeIniziali;
+      bottoneAltro.hidden = righeMostrate >= totale;
+      bottoneMeno.hidden = righeMostrate <= righeIniziali;
+      return righe;
+    };
+
+    var annunciaLibri = function (quanti) {
+      if (!annuncio) { return; }
+      // svuotare e riscrivere fa ripetere l'annuncio anche se il testo e' uguale
+      annuncio.textContent = '';
+      window.setTimeout(function () {
+        annuncio.textContent = (annuncio.getAttribute('data-testo') || '').replace('%s', quanti);
+      }, 60);
+    };
+
+    bottoneAltro.addEventListener('click', function () {
+      var prima = righeMostrate;
+      righeMostrate += righePerClic;
+      var righe = aggiornaLibreria();
+      var libri = 0;
+      var primoComando = null;
+      righe.slice(prima, righeMostrate).forEach(function (riga) {
+        riga.forEach(function (el) {
+          libri += el.classList.contains('libro') ? 1 : el.querySelectorAll('.libro').length;
+          if (!primoComando) { primoComando = el.querySelector('button, a[href]'); }
+        });
+      });
+      // il focus va sul primo libro nuovo; se il bottone sparisce passa a "Mostra meno"
+      if (primoComando) { primoComando.focus(); }
+      else if (bottoneAltro.hidden) { bottoneMeno.focus(); }
+      annunciaLibri(libri);
+    });
+
+    bottoneMeno.addEventListener('click', function () {
+      righeMostrate = righeIniziali;
+      aggiornaLibreria();
+      // la pagina si e' accorciata sopra: riporta in vista l'inizio della libreria
+      if (libreria.getBoundingClientRect().top < 0) {
+        var ridotto = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        libreria.scrollIntoView({ block: 'start', behavior: ridotto ? 'auto' : 'smooth' });
+      }
+      bottoneAltro.focus({ preventScroll: true });
+    });
+
+    window.addEventListener('resize', function () {
+      if (attesaResize) { return; }
+      attesaResize = window.requestAnimationFrame(function () {
+        attesaResize = 0;
+        // Safari su iPhone genera resize anche quando la barra degli indirizzi
+        // si ritira: si ricalcola solo se cambia la larghezza
+        if (libreria.clientWidth === larghezzaNota) { return; }
+        larghezzaNota = libreria.clientWidth;
+        aggiornaLibreria();
+      });
+    });
+
+    aggiornaLibreria();
+  }
 
   /* ---- Modali (generate dal build per ogni progetto con dettaglio) ---- */
   var lastFocused = null;

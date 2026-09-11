@@ -805,43 +805,171 @@ html.js .progress.is-visible .progress-part:nth-child(4) .progress-fill { transi
 }
 .progress-effort + .progress-desc { margin-top: 0.55rem; }
 
-/* ---------- Letture ---------- */
-.books-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.25rem 1rem;
+/* ---------- Letture: la libreria ----------
+   Le misure arrivano dal build in pixel da schermo largo (--w, --h, --fs sugli
+   elementi, --riga e --asse sulla libreria) e qui si moltiplicano per --u.
+   Cambiando --u la libreria si riduce in proporzione senza toccare il build.
+   Mensole e cornice sono in mogano; il fondo resta chiaro, cosi' il blocco
+   non pesa sulla pagina e i dorsi si leggono. */
+.libreria {
+  --u: 1px;
+  --mogano: #6b3226;
+  --mogano-luce: #8a4a36;
+  --mogano-ombra: #4a2219;
+  --fondo-libreria: #eee9df;
+  position: relative;
+  padding: calc(16 * var(--u)) calc(14 * var(--u)) calc(22 * var(--u));
+  border-radius: 4px;
+  /* Venature nel verso del legno: orizzontali sulla traversa in alto e sullo
+     zoccolo, verticali sui fianchi. Due trame a passo diverso per ogni pezzo,
+     cosi' il disegno non si ripete regolare. */
+  background:
+    repeating-linear-gradient(rgba(0, 0, 0, 0.05) 0 1px, transparent 1px 5px) 0 0 / 100% calc(16 * var(--u)) no-repeat,
+    repeating-linear-gradient(rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 11px) 0 0 / 100% calc(16 * var(--u)) no-repeat,
+    linear-gradient(var(--mogano-luce), var(--mogano)) 0 0 / 100% calc(16 * var(--u)) no-repeat,
+    repeating-linear-gradient(rgba(0, 0, 0, 0.06) 0 1px, transparent 1px 6px) 0 100% / 100% calc(22 * var(--u)) no-repeat,
+    repeating-linear-gradient(rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 13px) 0 100% / 100% calc(22 * var(--u)) no-repeat,
+    linear-gradient(var(--mogano), var(--mogano-ombra)) 0 100% / 100% calc(22 * var(--u)) no-repeat,
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.05) 0 1px, transparent 1px 5px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 12px),
+    var(--mogano);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 1px 2px rgba(28, 27, 24, 0.08),
+    0 18px 32px -20px rgba(28, 27, 24, 0.45);
+  scroll-margin-top: calc(var(--header-h) + 1.5rem);
 }
-.book { min-width: 0; }
-.book.is-hidden { display: none; }
-.book img {
-  width: 100%;
-  height: auto;
-  aspect-ratio: 2 / 3;
-  object-fit: cover;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--line);
-  transition: transform 0.3s var(--ease);
+.libreria-interno {
+  padding: 0 calc(14 * var(--u));
+  background: var(--fondo-libreria);
+  /* profondita': la cornice fa ombra sul fondo in alto e ai lati */
+  box-shadow:
+    inset 0 calc(10 * var(--u)) calc(12 * var(--u)) calc(-8 * var(--u)) rgba(40, 16, 10, 0.3),
+    inset calc(12 * var(--u)) 0 calc(12 * var(--u)) calc(-12 * var(--u)) rgba(40, 16, 10, 0.16),
+    inset calc(-12 * var(--u)) 0 calc(12 * var(--u)) calc(-12 * var(--u)) rgba(40, 16, 10, 0.16);
 }
-.book:hover img { transform: translateY(-3px); }
-.book-info { margin-top: 0.65rem; }
-.book-rating {
-  margin: 0 0 0.2rem;
-  font-size: 0.75rem;
-  line-height: 1;
-  letter-spacing: 1px;
-  color: var(--accent);
-}
-.book-title {
-  font-family: var(--font-body);
-  font-weight: 700;
-  font-size: 0.9rem;
-  line-height: 1.25;
-  margin: 0 0 0.15rem;
-}
-.book-author { margin: 0; font-size: 0.8rem; line-height: 1.3; color: var(--ink-soft); }
-.book-note { margin: 0.3rem 0 0; font-size: 0.78rem; line-height: 1.4; font-style: italic; color: var(--ink-soft); }
 
-.reads-more { margin-top: 2.25rem; }
+/* Una mensola e' una lista che va a capo. Ogni elemento occupa uno spazio alto
+   quanto la riga, quindi tutte le righe hanno la stessa altezza e lo sfondo
+   ripetuto disegna un asse sotto ognuna, anche quando la mensola va a capo. */
+.mensola {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin: 0 calc(-14 * var(--u));
+  padding: 0 calc(14 * var(--u));
+  list-style: none;
+  background:
+    /* asse: filo di luce sul bordo, legno, spigolo scuro in basso */
+    linear-gradient(
+      transparent calc((var(--riga) - var(--asse)) * var(--u)),
+      var(--mogano-luce) calc((var(--riga) - var(--asse)) * var(--u)),
+      var(--mogano) calc((var(--riga) - var(--asse) + 3) * var(--u)),
+      var(--mogano) calc((var(--riga) - 4) * var(--u)),
+      var(--mogano-ombra) calc(var(--riga) * var(--u))
+    ) 0 0 / 100% calc(var(--riga) * var(--u)),
+    /* ombra che l'asse di sopra proietta sul fondo */
+    linear-gradient(rgba(40, 16, 10, 0.16), rgba(40, 16, 10, 0) calc(20 * var(--u)))
+    0 0 / 100% calc(var(--riga) * var(--u));
+}
+.mensola[hidden] { display: none; }
+.mensola > li {
+  display: flex;
+  align-items: flex-end;
+  height: calc(var(--riga) * var(--u));
+  padding-bottom: calc(var(--asse) * var(--u));
+  margin: 0 calc(1 * var(--u));
+}
+.mensola > li[hidden] { display: none; }
+/* margini uguali a MARGINE_DORSO e MARGINE_OGGETTO di build.py */
+.mensola > .pila,
+.mensola > .libro--copertina,
+.mensola > .decorazione { margin: 0 calc(8 * var(--u)); }
+
+/* Dorso: colore scelto, curvatura con una sfumatura, due filetti come nelle
+   rilegature. Il testo e' carta o inchiostro, deciso dal build sul contrasto. */
+.libro-dorso {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--w) * var(--u));
+  height: calc(var(--h) * var(--u));
+  padding: calc(10 * var(--u)) 0;
+  overflow: hidden;
+  color: var(--testo);
+  background:
+    linear-gradient(transparent 6%, rgba(255, 255, 255, 0.2) 6%, rgba(255, 255, 255, 0.2) calc(6% + 1px), transparent calc(6% + 1px),
+      transparent calc(94% - 1px), rgba(255, 255, 255, 0.2) calc(94% - 1px), rgba(255, 255, 255, 0.2) 94%, transparent 94%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.24), rgba(255, 255, 255, 0.12) 20%, rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.16)),
+    var(--colore);
+  border-radius: 2px 2px 1px 1px;
+  font-size: calc(var(--fs) * var(--u));
+  line-height: 1;
+}
+.libro-titolo {
+  display: block;
+  max-height: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  writing-mode: vertical-rl;
+}
+.libro-dorso--ascendente .libro-titolo { transform: rotate(180deg); }
+.libro-dorso--normale { font-weight: 400; }
+.libro-dorso--grassetto { font-weight: 700; }
+.libro-dorso--corsivo { font-style: italic; }
+.libro-dorso--mono { font-family: var(--font-mono); letter-spacing: -0.02em; }
+
+/* Pila: libri distesi, il primo scritto in cima, leggermente sfalsati */
+.pila-libri {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: calc(var(--w) * var(--u));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pila-libri > li { margin-left: calc(var(--sposta) * var(--u)); }
+.libro--disteso .libro-dorso {
+  padding: 0 calc(10 * var(--u));
+  background:
+    linear-gradient(90deg, transparent 4%, rgba(255, 255, 255, 0.2) 4%, rgba(255, 255, 255, 0.2) calc(4% + 1px), transparent calc(4% + 1px),
+      transparent calc(96% - 1px), rgba(255, 255, 255, 0.2) calc(96% - 1px), rgba(255, 255, 255, 0.2) 96%, transparent 96%),
+    linear-gradient(rgba(0, 0, 0, 0.2), rgba(255, 255, 255, 0.1) 22%, rgba(255, 255, 255, 0) 52%, rgba(0, 0, 0, 0.14)),
+    var(--colore);
+  border-radius: 1px 2px 2px 1px;
+}
+.libro--disteso .libro-titolo {
+  max-width: 100%;
+  max-height: none;
+  writing-mode: horizontal-tb;
+  transform: none;
+}
+
+/* Copertina esposta di fronte */
+.libro--copertina img {
+  display: block;
+  width: calc(var(--w) * var(--u));
+  height: calc(var(--h) * var(--u));
+  object-fit: cover;
+  border-radius: 1px 3px 3px 1px;
+  box-shadow: 1px 0 0 rgba(0, 0, 0, 0.12), 4px 4px 8px -4px rgba(40, 16, 10, 0.45);
+}
+
+/* Decorazione: immagine scontornata appoggiata sull'asse */
+.decorazione img {
+  display: block;
+  width: calc(var(--w) * var(--u));
+  height: calc(var(--h) * var(--u));
+  object-fit: contain;
+  object-position: bottom;
+  filter: drop-shadow(3px 2px 3px rgba(40, 16, 10, 0.22));
+}
+
+.libreria-azioni { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2.25rem; }
+.libreria-azioni[hidden],
+.libreria-azioni [hidden] { display: none; }
 
 /* ---------- Contatti ---------- */
 .contact-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
@@ -1028,17 +1156,12 @@ html.js .reveal.is-visible { opacity: 1; transform: none; }
 
 @media (min-width: 600px) {
   .works-grid { grid-template-columns: repeat(2, 1fr); }
-  .books-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 @media (min-width: 680px) {
   .footer-inner { flex-direction: row; align-items: center; justify-content: space-between; }
   .modal { align-items: center; padding: 2rem; }
   .modal-panel { border-radius: 16px; animation: scale-in 0.2s var(--ease); }
-}
-
-@media (min-width: 768px) {
-  .books-grid { grid-template-columns: repeat(4, 1fr); }
 }
 
 /* La barra estesa richiede circa 790px di spazio utile nella versione
@@ -1080,10 +1203,6 @@ html.js .reveal.is-visible { opacity: 1; transform: none; }
   .works-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
-@media (min-width: 1024px) {
-  .books-grid { grid-template-columns: repeat(6, 1fr); }
-}
-
 /* ---------- Riduzione movimento ---------- */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
@@ -1099,7 +1218,6 @@ html.js .reveal.is-visible { opacity: 1; transform: none; }
   .work-card:hover { transform: none; }
   .work-card:hover .work-media img { transform: none; }
   .btn-primary:hover { transform: none; }
-  .book:hover img { transform: none; }
   .status-dot { animation: none; }
   .type-cursor { animation: none; }
   .lang-knob { transition: none; }

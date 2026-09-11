@@ -77,8 +77,9 @@ sforzo_basso: Low effort
 
 letture_titolo: Books that shaped me
 letture_intro: A selection of the reads that inspired me.
-libri_mostra_tutti: Show all books
+libri_mostra_altro: Show more
 libri_mostra_meno: Show less
+libri_aggiunti: Books added: %s
 libri_copertina: Cover of
 libri_voto: Rated %s out of 5
 

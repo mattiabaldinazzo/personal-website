@@ -54,9 +54,13 @@ STATIC_FILES = [
 STATIC_DIRS = ["images", "fonts", "jet_converter"]
 
 # Quanti elementi restano visibili prima del bottone "Mostra tutti"
-LIBRI_VISIBILI = 4
 PROGETTI_VISIBILI = 6
 PROGRESSI_VISIBILI = 4
+
+# Libreria: righe visibili all'apertura e righe aggiunte da ogni "Mostra altro".
+# Su schermo largo una riga e' una mensola.
+RIGHE_VISIBILI = 3
+RIGHE_PER_CLIC = 3
 
 # Estensioni ammesse per la foto profilo
 ESTENSIONI_FOTO = {".webp", ".jpg", ".jpeg", ".png"}
@@ -74,7 +78,6 @@ ERRORI = []
 AVVISI = []
 
 SIZES_LAVORI = "(min-width: 920px) 240px, (min-width: 600px) 370px, 92vw"
-SIZES_LIBRI = "(min-width: 1024px) 120px, (min-width: 768px) 180px, (min-width: 600px) 240px, 45vw"
 SIZES_FOTO = "(min-width: 860px) 244px, (min-width: 600px) 260px, 62vw"
 
 # Larghezze alternative generate da tools/ottimizza-immagini.py, per cartella
@@ -108,6 +111,18 @@ TESTO_DORSO_SCURO = "#1C1B18"
 NEGOZI_AMAZON = {"": "https://www.amazon.it/dp/%s", "_en": "https://www.amazon.com/dp/%s"}
 CARTELLA_DECORAZIONI = "images/decorazioni"
 ESTENSIONI_DECORAZIONI = (".webp", ".png", ".jpg", ".jpeg")
+# Misure della libreria in pixel sullo schermo largo. Il CSS le moltiplica per
+# --u, quindi cambiando --u si riduce tutto in proporzione. Altezza della riga
+# e spessore dell'asse arrivano al CSS come variabili, da qui.
+LARGHEZZA_MENSOLA = 776       # colonna da 832px meno cornice (14+14) e margini interni (14+14)
+ALTEZZA_LIBERA = 224          # spazio utile sopra ogni mensola
+ALTEZZA_ASSE = 14             # spessore della mensola
+ALTEZZE_FORMATO = {"tascabile": 172, "standard": 194, "grande": 214}
+SPESSORE_PER_PAGINA = 0.085   # 300 pagine, 26px
+SPESSORE_MINIMO = 20
+SPESSORE_MASSIMO = 58
+MARGINE_DORSO = 1             # per lato: 2px tra due dorsi vicini
+MARGINE_OGGETTO = 8           # per lato, attorno a copertine, pile e decorazioni
 
 
 def errore(msg):
@@ -799,7 +814,7 @@ def riepilogo_libreria(mensole):
     libri = pile = decorazioni = 0
     for mensola in mensole:
         for el in mensola:
-            if el["tipo"] == "libro":
+            if el["tipo"] in ("libro", "dorso", "copertina"):
                 libri += 1
             elif el["tipo"] == "pila":
                 pile += 1
@@ -1073,43 +1088,164 @@ def render_toggle_progetti(progetti, T):
                                 esc(T["lavori_mostra_meno"]), esc(T["lavori_mostra_tutti"])))
 
 
-def render_libri(libri, lingua, T):
-    voci = []
-    for i, b in enumerate(libri):
-        ed = b["edizioni"][lingua]
-        # La griglia usa i caratteri stella, che non hanno la mezza stella:
-        # mostra le stelle intere e il testo nascosto dice il voto esatto.
-        piene = int(b["voto"])
-        stelle = "&#9733;" * piene + "&#9734;" * (5 - piene)
-        nascosto = " is-hidden" if i >= LIBRI_VISIBILI else ""
-        nota = ('<p class="book-note">%s</p>' % inline_md(b["nota"][lingua])) if b["nota"][lingua] else ""
-        voci.append(
-            '<li class="book reveal%s">\n'
-            '            %s\n'
-            '            <div class="book-info">\n'
-            '              <p class="book-rating"><span class="visually-hidden">%s</span>'
-            '<span aria-hidden="true">%s</span></p>\n'
-            '              <h3 class="book-title">%s</h3>\n'
-            '              <p class="book-author">%s</p>\n%s'
-            '            </div>\n'
-            '          </li>' % (nascosto,
-                                tag_immagine(ed["copertina"],
-                                             "%s %s" % (T["libri_copertina"], ed["titolo"]),
-                                             SIZES_LIBRI, 'loading="lazy" decoding="async"'),
-                                esc(testo_voto(T, b["voto"], lingua)), stelle,
-                                esc(ed["titolo"]), esc(ed["autore"]), nota)
-        )
-    return "\n          ".join(voci)
+def spessore_dorso(pagine):
+    """Spessore del dorso in pixel ricavato dalle pagine: 300 pagine, 26px."""
+    return max(SPESSORE_MINIMO, min(SPESSORE_MASSIMO, round(pagine * SPESSORE_PER_PAGINA)))
 
 
-def render_toggle_libri(libri, T):
-    if len(libri) <= LIBRI_VISIBILI:
+def altezza_libro(libro):
+    """Altezza dal formato, con una piccola differenza stabile tra libri dello
+    stesso formato (da -3% a +3%): la mensola sembra vera e non cambia a ogni build."""
+    base = ALTEZZE_FORMATO[libro["formato"]]
+    scarto = indice_stabile("altezza:" + libro["slug"], 7) - 3
+    return min(ALTEZZA_LIBERA, round(base * (100 + scarto) / 100))
+
+
+def corpo_testo_dorso(spessore):
+    """Dimensione del testo sul dorso: cresce con lo spessore, da 11 a 15px."""
+    return max(11, min(15, round(spessore * 0.44)))
+
+
+def proporzione_immagine(percorso):
+    """Larghezza divisa altezza di un'immagine del sito, 0 se non leggibile."""
+    if not percorso:
+        return 0
+    larg, alt = dimensioni_immagine(ROOT / percorso.lstrip("/"))
+    return larg / alt if larg and alt else 0
+
+
+def misura_libreria(mensole, libri):
+    """Aggiunge a ogni elemento della libreria le misure in pixel e controlla
+    lo spazio. Una mensola troppo piena va a capo su piu' righe, una pila
+    piu' alta della mensola viene divisa. Le misure dipendono solo dai campi
+    comuni alle due lingue, cosi' la disposizione e' identica in italiano e
+    in inglese e gli avvisi escono una volta sola."""
+    per_nome = {b["slug"]: b for b in libri}
+    misurate = []
+    for numero, mensola in enumerate(mensole, 1):
+        elementi = []
+        for el in mensola:
+            if el["tipo"] == "pila":
+                elementi.extend(misura_pila(el, per_nome, numero))
+            elif el["tipo"] == "decorazione":
+                altezza = round(ALTEZZA_LIBERA * el["altezza"] / 100)
+                proporzione = proporzione_immagine(el["immagine"])
+                if not proporzione:
+                    avviso("libreria.md: non riesco a leggere le misure di %s, la considero quadrata"
+                           % el["immagine"])
+                    proporzione = 1
+                elementi.append({"tipo": "decorazione", "immagine": el["immagine"],
+                                 "w": round(altezza * proporzione), "h": altezza,
+                                 "margine": MARGINE_OGGETTO})
+            elif el["vista"] == "copertina":
+                libro = per_nome[el["slug"]]
+                altezza = altezza_libro(libro)
+                # la proporzione viene dalla copertina italiana: quella inglese
+                # riempie lo stesso spazio, cosi' la mensola non cambia tra le lingue
+                proporzione = proporzione_immagine(libro["meta"].get("copertina", "")) or 2 / 3
+                elementi.append({"tipo": "copertina", "slug": el["slug"],
+                                 "w": min(altezza, round(altezza * proporzione)), "h": altezza,
+                                 "margine": MARGINE_OGGETTO})
+            else:
+                libro = per_nome[el["slug"]]
+                spessore = spessore_dorso(libro["pagine"])
+                elementi.append({"tipo": "dorso", "slug": el["slug"],
+                                 "w": spessore, "h": altezza_libro(libro),
+                                 "fs": corpo_testo_dorso(spessore), "margine": MARGINE_DORSO})
+        occupato = sum(e["w"] + 2 * e["margine"] for e in elementi)
+        if occupato > LARGHEZZA_MENSOLA:
+            avviso("libreria.md: la mensola %d e' piena al %d%%, su schermo largo va a capo su piu' righe"
+                   % (numero, round(occupato * 100 / LARGHEZZA_MENSOLA)))
+        misurate.append(elementi)
+    return misurate
+
+
+def misura_pila(pila, per_nome, numero):
+    """Libri distesi uno sopra l'altro. Se superano l'altezza della mensola
+    la pila si divide in pile vicine."""
+    pile = [[]]
+    altezza = 0
+    for slug in pila["libri"]:
+        libro = per_nome[slug]
+        spessore = spessore_dorso(libro["pagine"])
+        if pile[-1] and altezza + spessore > ALTEZZA_LIBERA:
+            pile.append([])
+            altezza = 0
+        pile[-1].append({"slug": slug, "w": altezza_libro(libro), "h": spessore,
+                         "fs": corpo_testo_dorso(spessore),
+                         "sposta": indice_stabile("pila:" + slug, 9)})
+        altezza += spessore
+    if len(pile) > 1:
+        avviso("libreria.md: una pila della mensola %d e' piu' alta della mensola, la divido in %d pile"
+               % (numero, len(pile)))
+    return [{"tipo": "pila", "libri": p, "w": max(x["w"] + x["sposta"] for x in p),
+             "h": sum(x["h"] for x in p), "margine": MARGINE_OGGETTO} for p in pile]
+
+
+def descrizione_libro(libro, lingua, T):
+    """Testo per i lettori di schermo: titolo, autore e voto."""
+    ed = libro["edizioni"][lingua]
+    return "%s, %s. %s" % (ed["titolo"], ed["autore"], testo_voto(T, libro["voto"], lingua))
+
+
+def render_dorso(libro, lingua, T, classe, w, h, fs, extra_stile=""):
+    ed = libro["edizioni"][lingua]
+    return ('<li class="libro %s" style="--w:%d;--h:%d;--fs:%d;--colore:%s;--testo:%s%s">'
+            '<span class="libro-dorso libro-dorso--%s libro-dorso--%s" aria-hidden="true">'
+            '<span class="libro-titolo">%s</span></span>'
+            '<span class="visually-hidden">%s</span></li>'
+            % (classe, w, h, fs, ed["dorso_colore"], ed["dorso_testo"], extra_stile,
+               ed["dorso_stile"], ed["dorso_lettura"], esc(ed["dorso_titolo"]),
+               esc(descrizione_libro(libro, lingua, T))))
+
+
+def render_elemento_libreria(el, per_nome, lingua, T):
+    if el["tipo"] == "dorso":
+        return render_dorso(per_nome[el["slug"]], lingua, T, "libro--dorso", el["w"], el["h"], el["fs"])
+    if el["tipo"] == "pila":
+        distesi = [render_dorso(per_nome[x["slug"]], lingua, T, "libro--disteso",
+                                x["w"], x["h"], x["fs"], ";--sposta:%d" % x["sposta"])
+                   for x in el["libri"]]
+        return ('<li class="pila" style="--w:%d"><ul class="pila-libri" role="list">%s</ul></li>'
+                % (el["w"], "".join(distesi)))
+    if el["tipo"] == "copertina":
+        libro = per_nome[el["slug"]]
+        immagine = tag_immagine(libro["edizioni"][lingua]["copertina"], "", "%dpx" % el["w"],
+                                'loading="lazy" decoding="async"')
+        return ('<li class="libro libro--copertina" style="--w:%d;--h:%d">%s'
+                '<span class="visually-hidden">%s</span></li>'
+                % (el["w"], el["h"], immagine, esc(descrizione_libro(libro, lingua, T))))
+    immagine = tag_immagine(el["immagine"], "", "", 'loading="lazy" decoding="async"')
+    return ('<li class="decorazione" aria-hidden="true" style="--w:%d;--h:%d">%s</li>'
+            % (el["w"], el["h"], immagine))
+
+
+def render_libreria(misurate, libri, lingua, T):
+    """La libreria con le mensole, i bottoni "Mostra altro" e "Mostra meno" e
+    l'annuncio per i lettori di schermo. I bottoni nascono nascosti: li mostra
+    main.js solo se le righe sono piu' di RIGHE_VISIBILI, quindi senza
+    JavaScript si vede tutta la libreria."""
+    if not misurate:
         return ""
-    return ('<div class="reads-more reveal">\n'
-            '          <button class="btn btn-ghost" type="button" data-books-toggle aria-expanded="false"\n'
-            '                  data-testo-tutti="%s" data-testo-meno="%s">%s</button>\n'
-            '        </div>' % (esc(T["libri_mostra_tutti"]), esc(T["libri_mostra_meno"]),
-                                esc(T["libri_mostra_tutti"])))
+    per_nome = {b["slug"]: b for b in libri}
+    mensole = []
+    for elementi in misurate:
+        voci = "\n            ".join(render_elemento_libreria(el, per_nome, lingua, T) for el in elementi)
+        mensole.append('<ul class="mensola" role="list">\n            %s\n          </ul>' % voci)
+    return ('<div class="libreria reveal" data-libreria data-righe="%d" data-righe-clic="%d"'
+            ' style="--riga:%d;--asse:%d">\n'
+            '          <div class="libreria-interno">\n'
+            '          %s\n'
+            '          </div>\n'
+            '        </div>\n'
+            '        <div class="libreria-azioni" data-libreria-azioni hidden>\n'
+            '          <button class="btn btn-ghost" type="button" data-libreria-altro>%s</button>\n'
+            '          <button class="btn btn-ghost" type="button" data-libreria-meno hidden>%s</button>\n'
+            '        </div>\n'
+            '        <p class="visually-hidden" aria-live="polite" data-libreria-annuncio data-testo="%s"></p>'
+            % (RIGHE_VISIBILI, RIGHE_PER_CLIC, ALTEZZA_LIBERA + ALTEZZA_ASSE, ALTEZZA_ASSE,
+               "\n          ".join(mensole),
+               esc(T["libri_mostra_altro"]), esc(T["libri_mostra_meno"]), esc(T["libri_aggiunti"])))
 
 
 def quota_con_unita(voce, lingua):
@@ -1224,7 +1360,7 @@ def render_toggle_progressi(voci, T):
 
 # --------------------------------------------------------------------- build
 
-def costruisci_pagina(modello, lingua, sottocartella, testi, progetti, libri, progressi, foto):
+def costruisci_pagina(modello, lingua, sottocartella, testi, progetti, libri, libreria, progressi, foto):
     T = testi[lingua]
     prefisso = "/" if not sottocartella else "/%s/" % sottocartella
     altro_codice = T["altra_lingua_codice"]
@@ -1255,8 +1391,7 @@ def costruisci_pagina(modello, lingua, sottocartella, testi, progetti, libri, pr
         "MODALS": render_modali(progetti, lingua, T),
         "PROGRESS": render_progressi(progressi, lingua, T),
         "PROGRESS_MORE": render_toggle_progressi(progressi, T),
-        "BOOKS": render_libri(libri, lingua, T),
-        "BOOKS_MORE": render_toggle_libri(libri, T),
+        "BOOKS": render_libreria(libreria, libri, lingua, T),
         "LAVORI_INTRO": inline_md(T["lavori_intro"]),
     }
     # tutte le chiavi dei testi diventano segnaposto in maiuscolo: T_NAV_LAVORI ecc.
@@ -1299,7 +1434,7 @@ def main():
     testi = carica_testi()
     progetti = carica_progetti()
     libri = carica_libri()
-    libreria = carica_libreria(libri)
+    libreria = misura_libreria(carica_libreria(libri), libri)
     progressi = carica_progressi()
     foto = trova_foto_profilo()
 
@@ -1309,7 +1444,7 @@ def main():
         for lingua, sottocartella in LINGUE:
             pagine[lingua] = (sottocartella,
                               costruisci_pagina(modello, lingua, sottocartella, testi,
-                                                progetti, libri, progressi, foto))
+                                                progetti, libri, libreria, progressi, foto))
 
     if ERRORI:
         print("Build fallita. Correggi questi problemi:", file=sys.stderr)

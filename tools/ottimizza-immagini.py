@@ -18,6 +18,10 @@ varianti usa semplicemente l'immagine grande.
 Convenzione dei nomi: accanto a nome.webp vengono creati nome-480.webp,
 nome-880.webp e cosi' via. I file che finiscono con -numero vengono
 ignorati come sorgente, altrimenti si genererebbero varianti di varianti.
+
+Le decorazioni della libreria (images/decorazioni) seguono regole proprie:
+conservano la trasparenza, perdono i bordi vuoti attorno all'oggetto, si
+limitano in altezza e diventano webp. Nessuna variante ridotta.
 """
 
 import re
@@ -25,7 +29,7 @@ import sys
 from pathlib import Path
 
 try:
-    from PIL import Image
+    from PIL import Image, ImageOps
 except ImportError:
     print("Serve Pillow: pip install pillow", file=sys.stderr)
     sys.exit(1)
@@ -39,6 +43,16 @@ REGOLE = {
     "images/books":    ([220], 440, 82),
 }
 
+# Decorazioni della libreria: sulla mensola conta quanto sono alte, quindi il
+# limite e' sull'altezza. 440px bastano per la mensola piu' alta sugli schermi
+# ad alta densita'.
+DECORAZIONI = "images/decorazioni"
+ALTEZZA_DECORAZIONI = 440
+QUALITA_DECORAZIONI = 86
+# Pixel con opacita' fino a questa soglia contano come vuoti quando si tagliano
+# i bordi: gli oggetti scontornati hanno spesso un alone quasi invisibile.
+SOGLIA_TRASPARENZA = 8
+
 ESTENSIONI = {".webp", ".jpg", ".jpeg", ".png"}
 VARIANTE = re.compile(r"-\d+$")
 
@@ -48,6 +62,49 @@ def ridimensiona(im, larghezza):
         return im.copy()
     altezza = round(im.height * larghezza / im.width)
     return im.resize((larghezza, altezza), Image.LANCZOS)
+
+
+def ottimizza_decorazioni():
+    """Taglia i bordi trasparenti, limita l'altezza e salva in webp conservando
+    la trasparenza. Il bordo inferiore dell'immagine diventa la base che poggia
+    sulla mensola, quindi niente vuoto sotto l'oggetto. Lanciato due volte non
+    cambia piu' nulla. Ritorna quante immagini ha modificato."""
+    base = ROOT / DECORAZIONI
+    if not base.exists():
+        return 0
+    modificate = 0
+    for src in sorted(base.iterdir()):
+        if not src.is_file() or src.suffix.lower() not in ESTENSIONI:
+            continue
+        im = ImageOps.exif_transpose(Image.open(src))
+        cambi = []
+        if im.mode in ("RGBA", "LA", "P", "PA") or "transparency" in im.info:
+            im = im.convert("RGBA")
+            pieni = im.getchannel("A").point(lambda a: 255 if a > SOGLIA_TRASPARENZA else 0)
+            riquadro = pieni.getbbox()
+            if riquadro and riquadro != (0, 0, im.width, im.height):
+                im = im.crop(riquadro)
+                cambi.append("bordi vuoti tagliati")
+        else:
+            im = im.convert("RGB")
+            print("  attenzione %s: senza trasparenza, lo sfondo resta visibile" % src.relative_to(ROOT))
+        if im.height > ALTEZZA_DECORAZIONI:
+            larghezza = max(1, round(im.width * ALTEZZA_DECORAZIONI / im.height))
+            im = im.resize((larghezza, ALTEZZA_DECORAZIONI), Image.LANCZOS)
+            cambi.append("altezza %dpx" % ALTEZZA_DECORAZIONI)
+        if src.suffix.lower() != ".webp":
+            cambi.append("convertita in webp")
+        if not cambi:
+            continue
+        dst = src.with_suffix(".webp")
+        im.save(dst, "WEBP", quality=QUALITA_DECORAZIONI, method=6)
+        if dst != src:
+            src.unlink()
+        modificate += 1
+        print("  decorazione %s: %s" % (dst.relative_to(ROOT), ", ".join(cambi)))
+        if dst.name != src.name:
+            print("    in content/libreria.md scrivi %s" % dst.name)
+    return modificate
 
 
 def main():
@@ -90,7 +147,10 @@ def main():
                 creati += 1
                 print("  variante %s" % dst.relative_to(ROOT))
 
-    print("\nFatto: %d varianti generate, %d originali ridotti." % (creati, aggiornati))
+    decorazioni = ottimizza_decorazioni()
+
+    print("\nFatto: %d varianti generate, %d originali ridotti, %d decorazioni sistemate."
+          % (creati, aggiornati, decorazioni))
     print("Ricordati di committare i file nuovi insieme all'immagine originale.")
 
 

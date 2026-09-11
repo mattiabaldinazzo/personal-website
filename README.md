@@ -47,7 +47,7 @@ Optional detail card text, in markdown.
 
 Regole:
 
-I primi 6 progetti sono visibili, gli altri compaiono con "Mostra tutti i progetti". La soglia è la costante `PROGETTI_VISIBILI` in `build.py`, come `LIBRI_VISIBILI` per i libri.
+I primi 6 progetti sono visibili, gli altri compaiono con "Mostra tutti i progetti". La soglia è la costante `PROGETTI_VISIBILI` in `build.py`.
 
 `titolo`, `categoria`, `descrizione` sono obbligatori. `categoria` può essere `personali`, `lavorativi`, `universitari` o una nuova: i filtri si aggiornano da soli. `immagine` è facoltativa: senza, la card mostra il titolo su fondo scuro. Se il file ha un corpo sotto il secondo `---`, la card apre la scheda di dettaglio (il `link` compare come bottone in fondo). Se non ha corpo, la card apre direttamente il `link`. Ogni scheda di dettaglio ha un URL diretto: `https://mattiabaldinazzo.it/#progetto-nome-progetto`.
 
@@ -153,9 +153,9 @@ Nota facoltativa di una o due righe, mostrata sotto l'autore.
 Optional one or two line note, shown under the author.
 ```
 
-`titolo`, `autore`, `voto` e `copertina` sono obbligatori, tutti gli altri campi sono facoltativi. I primi 4 libri sono visibili, gli altri compaiono con "Mostra tutti i libri".
+`titolo`, `autore`, `voto` e `copertina` sono obbligatori, tutti gli altri campi sono facoltativi.
 
-Oggi la sezione Letture usa titolo, autore, copertina, voto e nota. Dorso, link e disposizione sono già letti e controllati dal build e servono alla libreria con le mensole.
+La sezione Letture mostra i libri su una libreria in legno, disposti come scrivi in `content/libreria.md`. Sulla mensola si vedono dorsi, copertine e decorazioni. Titolo, autore e voto sono nel testo per i lettori di schermo; link e nota non sono ancora mostrati.
 
 ### Due edizioni, italiana e inglese
 
@@ -167,7 +167,7 @@ Se un libro esiste solo in inglese, scrivi i dati inglesi nei campi senza `_en`:
 
 ### Voto
 
-`voto` va da 0 a 5 a mezzi punti. Puoi scriverlo con il punto o con la virgola: `4`, `4.5`, `4,5`. Un valore come `4.3` blocca il build. La griglia attuale mostra solo stelle intere, il testo per i lettori di schermo riporta il voto esatto.
+`voto` va da 0 a 5 a mezzi punti. Puoi scriverlo con il punto o con la virgola: `4`, `4.5`, `4,5`. Un valore come `4.3` blocca il build. Il testo per i lettori di schermo riporta il voto esatto, per esempio "Valutazione 4,5 su 5".
 
 ### Dorso
 
@@ -215,13 +215,23 @@ Le righe che iniziano con `#` sono commenti. Un libro che non compare nel file f
 
 Il build si ferma se un nome non corrisponde a nessun libro, se un libro compare due volte, se un'opzione è sconosciuta, se un separatore è scritto male o se manca l'immagine di una decorazione. Il messaggio indica la riga del file.
 
+### Righe, Mostra altro e Mostra meno
+
+All'apertura si vedono 3 righe della libreria. "Mostra altro" ne aggiunge 3 a ogni clic. "Mostra meno" compare dal primo clic, torna subito alle prime 3 righe e riporta in vista l'inizio della libreria. Con 3 righe o meno i bottoni non compaiono. Le soglie sono le costanti `RIGHE_VISIBILI` e `RIGHE_PER_CLIC` in `build.py`.
+
+Su schermo largo una riga è una mensola. Una mensola larga 776 px contiene circa 27 dorsi da 300 pagine. Se scrivi più elementi di quanti ne entrano, la mensola va a capo su una riga in più e il build ti avvisa con la percentuale di riempimento. Una pila più alta della mensola viene divisa in pile vicine, sempre con un avviso. Su schermi più stretti le mensole vanno a capo da sole; senza JavaScript si vede tutta la libreria.
+
+### Misure
+
+Le misure sono costanti in `build.py`, in pixel da schermo largo. `ALTEZZE_FORMATO` dà l'altezza di tascabile, standard e grande. `SPESSORE_PER_PAGINA` trasforma le pagine in spessore, tra `SPESSORE_MINIMO` e `SPESSORE_MASSIMO`: 300 pagine fanno 26 px. Libri dello stesso formato hanno altezze leggermente diverse, calcolate dal nome del file, quindi identiche a ogni build. Una copertina esposta prende le proporzioni dall'immagine italiana, così occupa lo stesso spazio nelle due lingue. I colori del legno sono variabili in testa alla sezione Letture di `styles.css`.
+
 ## Cambiare la foto profilo
 
 La foto della sezione "Chi sono" sta in `images/profilo/`, il nome del file è libero: il build usa l'unica immagine presente nella cartella. Per cambiarla elimina quella attuale, aggiungi la nuova e fai commit. Regole e formato consigliato sono in `images/profilo/LEGGIMI.md`. Con zero immagini o più di una il build fallisce e ti avvisa.
 
 ## Immagini
 
-Progetti in `images/projects/` (webp, larghezza 880 px). Copertine in `images/books/` (webp, larghezza 440 px). Foto del profilo in `images/profilo/`. Decorazioni della libreria in `images/decorazioni/`, in webp o png con sfondo trasparente: le regole sono nel `LEGGIMI.md` della cartella, e `tools/ottimizza-immagini.py` non elabora questa cartella, quindi non tocca la trasparenza. Se il markdown punta a un'immagine che non esiste, il build fallisce e te lo dice.
+Progetti in `images/projects/` (webp, larghezza 880 px). Copertine in `images/books/` (webp, larghezza 440 px). Foto del profilo in `images/profilo/`. Decorazioni della libreria in `images/decorazioni/`, in webp o png con sfondo trasparente: le regole sono nel `LEGGIMI.md` della cartella. `tools/ottimizza-immagini.py` taglia i bordi trasparenti attorno all'oggetto, limita l'altezza a 440 px e converte in webp conservando la trasparenza; se il nome cambia, per esempio da `vaso.png` a `vaso.webp`, te lo scrive e va aggiornato in `content/libreria.md`. Se il markdown punta a un'immagine che non esiste, il build fallisce e te lo dice.
 
 Accanto a ogni immagine c'è una versione ridotta con il suffisso della larghezza, per esempio `spotify-480.webp`: il sito le propone al browser con `srcset`, così su telefono viene scaricata solo la misura che serve. Quando aggiungi o sostituisci un'immagine, rigenera le versioni ridotte:
 
