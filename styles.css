@@ -913,22 +913,36 @@ html.js .progress.is-visible .progress-part:nth-child(4) .progress-fill { transi
     linear-gradient(90deg, rgba(0, 0, 0, 0.24), rgba(255, 255, 255, 0.12) 20%, rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.16)),
     var(--colore);
   border-radius: 2px 2px 1px 1px;
-  font-size: calc(var(--fs) * var(--u));
+  /* corpo del titolo calcolato dal build: --tm su telefono, --t da 680px */
+  font-size: calc(var(--tm) * 1px);
   line-height: 1;
 }
 .libro-titolo {
   display: block;
-  max-height: 100%;
-  overflow: hidden;
+  line-height: 1.05;
+  text-align: center;
   white-space: nowrap;
-  text-overflow: ellipsis;
   writing-mode: vertical-rl;
 }
+/* Il build sceglie corpo e righe perche' il titolo entri nel dorso. Il titolo
+   non ha limiti propri: resta centrato e il margine interno del dorso assorbe
+   i piccoli arrotondamenti con cui ogni browser disegna le lettere. Solo i
+   titoli troppo lunghi anche su due righe si fermano ai puntini. */
+.libro-titolo--taglia {
+  max-height: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .libro-dorso--ascendente .libro-titolo { transform: rotate(180deg); }
+/* Titoli lunghi su due righe. Il build divide il titolo a uno spazio e sceglie
+   quando usare due righe, separatamente per telefono (libro-titolo--due-m) e
+   per schermo largo (libro-titolo--due): ogni riga diventa un blocco. */
+.libro-titolo--due-m .riga { display: block; }
 .libro-dorso--normale { font-weight: 400; }
 .libro-dorso--grassetto { font-weight: 700; }
 .libro-dorso--corsivo { font-style: italic; }
-.libro-dorso--mono { font-family: var(--font-mono); letter-spacing: -0.02em; }
+/* niente spaziatura ridotta: la lunghezza calcolata dal build usa le larghezze del font */
+.libro-dorso--mono { font-family: var(--font-mono); }
 
 /* Pila: libri distesi, il primo scritto in cima, leggermente sfalsati */
 .pila-libri {
@@ -951,10 +965,12 @@ html.js .progress.is-visible .progress-part:nth-child(4) .progress-fill { transi
   border-radius: 1px 2px 2px 1px;
 }
 .libro--disteso .libro-titolo {
-  max-width: 100%;
-  max-height: none;
   writing-mode: horizontal-tb;
   transform: none;
+}
+.libro--disteso .libro-titolo--taglia {
+  max-width: 100%;
+  max-height: none;
 }
 
 /* Copertina esposta di fronte */
@@ -999,12 +1015,10 @@ html.js .progress.is-visible .progress-part:nth-child(4) .progress-fill { transi
 }
 
 /* Su telefono i dorsi sottili si allargano e i libri distesi si alzano fino
-   alla misura minima da toccare, e il testo non scende sotto gli 11px.
-   Da 680px la libreria torna alle misure piene, dove il build garantisce
-   gia' i minimi. */
+   alla misura minima da toccare. Da 680px la libreria torna alle misure
+   piene, dove il build garantisce gia' i minimi. */
 .libro--dorso .libro-dorso { width: max(calc(var(--tocco, 0) * 1px), calc(var(--w) * var(--u))); }
 .libro--disteso .libro-dorso { height: max(calc(var(--tocco, 0) * 1px), calc(var(--h) * var(--u))); }
-.libro-dorso { font-size: max(11px, calc(var(--fs) * var(--u))); }
 .libro-apri { -webkit-tap-highlight-color: transparent; }
 @media (hover: none) {
   .libro--dorso .libro-apri:active,
@@ -1259,6 +1273,9 @@ html.js .reveal.is-visible { opacity: 1; transform: none; }
   .modal { align-items: center; padding: 2rem; }
   .modal-panel { border-radius: 16px; animation: scale-in 0.2s var(--ease); }
   .libreria { --u: 1px; }
+  .libro-dorso { font-size: calc(var(--t) * 1px); }
+  .libro-titolo--due-m .riga { display: inline; }
+  .libro-titolo--due .riga { display: block; }
   .modal-body { padding-bottom: 1.5rem; }
   .libro-scheda { flex-direction: row; align-items: flex-start; gap: 1.75rem; text-align: left; }
   .libro-scheda-copertina { flex: none; }

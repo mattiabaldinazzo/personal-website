@@ -1,6 +1,6 @@
 # mattiabaldinazzo.it
 
-Sito statico bilingue generato da file markdown. Per aggiungere un progetto, un progresso o un libro basta creare un file in `content/` e fare commit su `main`: il workflow rigenera e pubblica il sito nelle due lingue. Funziona da qualunque editor di testo, anche dall'interfaccia web di GitHub (Add file, Create new file).
+Sito statico bilingue generato da file markdown. Per aggiungere un progetto, un progresso o un libro basta creare un file in `content/` e fare commit su `main` (per un libro puoi anche decidere dove sta sulla libreria, con una riga in `content/libreria.md`): il workflow rigenera e pubblica il sito nelle due lingue. Funziona da qualunque editor di testo, anche dall'interfaccia web di GitHub (Add file, Create new file).
 
 ## Le due lingue
 
@@ -146,11 +146,11 @@ dorso_colore: "#2F4F3E"
 dorso_stile: grassetto
 ---
 
-Nota facoltativa di una o due righe, mostrata sotto l'autore.
+Nota facoltativa di una o due righe, mostrata nella scheda del libro.
 
 --- en ---
 
-Optional one or two line note, shown under the author.
+Optional one or two line note, shown in the book card.
 ```
 
 `titolo`, `autore`, `voto` e `copertina` sono obbligatori, tutti gli altri campi sono facoltativi.
@@ -174,6 +174,8 @@ Se un libro esiste solo in inglese, scrivi i dati inglesi nei campi senza `_en`:
 `pagine` decide lo spessore del dorso: senza il campo vale 300. `formato` decide l'altezza e accetta `tascabile`, `standard` o `grande`: senza il campo vale `standard`.
 
 `dorso_titolo` è il testo sul dorso: senza il campo compare il titolo. `dorso_colore` è il colore in esadecimale, anche abbreviato come `#7A9`. Senza il campo il build sceglie uno di 8 toni in base al nome del file, sempre lo stesso. Il testo sul dorso diventa chiaro o scuro da solo, quello con più contrasto.
+
+Titoli lunghi. Il build calcola la lunghezza di ogni titolo con le larghezze dei caratteri dei font del sito e sceglie come farlo entrare, separatamente per telefono e per schermo largo. Se il titolo entra al corpo pieno non cambia nulla. Se non entra, il corpo scende fino a 9,5 px su una riga. Se non basta, il titolo va su due righe, divise a uno spazio nel punto che rende le righe più simili, fino a 9 px. Se non entra neanche così, per esempio una sola parola lunghissima, il dorso mostra il titolo al corpo pieno con i puntini e il build ti avvisa: in quel caso scrivi un titolo breve in `dorso_titolo` o `dorso_titolo_en`. Le soglie sono `CORPO_MINIMO_UNA_RIGA` e `CORPO_MINIMO_DUE_RIGHE` in `build.py`. La stessa regola vale per i libri distesi.
 
 `dorso_stile` accetta `normale`, `grassetto`, `corsivo` o `mono`, con i font del sito: senza il campo vale `grassetto`. `dorso_lettura` accetta `ascendente`, dal basso verso l'alto come nelle edizioni italiane, oppure `discendente`, dall'alto verso il basso come nelle edizioni inglesi. Senza il campo il sito italiano usa `ascendente` e quello inglese `discendente`.
 
@@ -231,7 +233,7 @@ Su schermo largo una riga è una mensola. Una mensola larga 776 px contiene circ
 
 ### Telefono
 
-Sotto i 680 px la libreria si riduce all'80%, il valore di `SCALA_MOBILE` in `build.py`: una riga è alta circa 190 px e ne entrano 3 in una schermata. Ogni libro resta un bersaglio da almeno 24 px, la misura minima delle WCAG 2.2, fissata in `LARGHEZZA_TOCCO`: i dorsi sottili si allargano e i libri distesi si alzano. Il testo sui dorsi non scende sotto gli 11 px. Una pila si divide già calcolando le misure da telefono, così la divisione è la stessa su ogni schermo. Da 680 px in su la libreria torna alle misure piene.
+Sotto i 680 px la libreria si riduce all'80%, il valore di `SCALA_MOBILE` in `build.py`: una riga è alta circa 190 px e ne entrano 3 in una schermata. Ogni libro resta un bersaglio da almeno 24 px, la misura minima delle WCAG 2.2, fissata in `LARGHEZZA_TOCCO`: i dorsi sottili si allargano e i libri distesi si alzano. Il titolo parte da 11 px e scende solo se è lungo, come descritto in "Titoli lunghi". Una pila si divide già calcolando le misure da telefono, così la divisione è la stessa su ogni schermo. Da 680 px in su la libreria torna alle misure piene.
 
 ### Misure
 
@@ -256,11 +258,13 @@ Committa i file generati insieme all'originale. Se te ne dimentichi il sito funz
 
 ## Pubblicazione
 
-Push su `main`: il workflow esegue `python3 build.py`, genera `_site/` con le due lingue e pubblica su GitHub Pages. Se un file markdown ha errori (campo mancante, numero non valido, immagine inesistente) il build fallisce con l'elenco dei problemi e il sito online resta quello precedente. In Settings, Pages la source deve essere "GitHub Actions".
+Push su `main`: il workflow esegue `python3 build.py`, genera `_site/` con le due lingue e pubblica su GitHub Pages. Se un file markdown ha errori (campo mancante, numero non valido, immagine inesistente, ISBN sbagliato, nome sbagliato in `content/libreria.md`) il build fallisce con l'elenco dei problemi e il sito online resta quello precedente. In Settings, Pages la source deve essere "GitHub Actions".
 
 ## Cose che il build fa da solo
 
 L'anno finale del footer (`2020-...`) è quello del giorno in cui pubblichi, quindi non va aggiornato a mano. Il numero progressivo delle schede progetto, la percentuale dei progressi, la mappa delle lingue e la sitemap sono tutti calcolati dai contenuti.
+
+Per la libreria il build calcola da solo: lo spessore dei dorsi dalle pagine, l'altezza dal formato, il colore dei dorsi senza `dorso_colore`, il colore del testo sul dorso, il corpo e le righe dei titoli lunghi, il link ad Amazon dall'ISBN, la divisione delle pile troppo alte e la capienza di ogni mensola.
 
 `cv.pdf` nella radice è un segnaposto: sostituiscilo con il tuo curriculum vero mantenendo il nome del file.
 
@@ -272,6 +276,8 @@ python3 -m http.server 8000 --directory _site
 ```
 
 Poi apri http://localhost:8000. Serve solo Python 3, nessuna dipendenza.
+
+Per provarlo sull'iPhone lascia acceso il server, apri una nuova scheda del Terminale e lancia `ipconfig getifaddr en0`: ottieni l'indirizzo del Mac, per esempio `192.168.1.23`. Con l'iPhone sulla stessa rete Wi-Fi apri Safari su `http://192.168.1.23:8000`, con il tuo indirizzo. Se il Mac chiede di consentire le connessioni in entrata per Python, scegli Consenti.
 
 ## Struttura
 

@@ -133,6 +133,19 @@ MARGINE_OGGETTO = 8           # per lato, attorno a copertine, pile e decorazion
 # restano comunque larghi o alti almeno LARGHEZZA_TOCCO, cosi' si toccano bene.
 SCALA_MOBILE = 0.8
 LARGHEZZA_TOCCO = 24
+# Titolo sul dorso. iA Writer Quattro ha solo quattro larghezze di carattere e
+# nessuna crenatura, quindi la lunghezza di un titolo e' la somma esatta delle
+# larghezze, lette dai file dei font. I caratteri non elencati sono larghi
+# 0,6 em. Lo spazio e' largo 0,45 em nel tondo e nel grassetto e 0,6 nel
+# corsivo. In iA Writer Mono ogni carattere e' largo 0,6 em.
+LARGHEZZE_QUATTRO = {0.3: "IijlÌÍÎÏìíîïĨĩĪīĬĭįİıĵĺļľ", 0.45: "frtŕŗřţť", 0.9: "%@MWmw©ÆæŒœŴŵ—…"}
+LARGHEZZA_CARATTERE = {c: em for em, caratteri in LARGHEZZE_QUATTRO.items() for c in caratteri}
+MARGINE_TESTO_DORSO = 10      # spazio alle due estremita' del titolo, uguale al padding del CSS
+CORPO_MINIMO_TELEFONO = 11    # corpo pieno del titolo su telefono
+CORPO_MINIMO_UNA_RIGA = 9.5   # sotto questo corpo il titolo va su due righe
+CORPO_MINIMO_DUE_RIGHE = 9    # sotto questo corpo neanche due righe bastano e il titolo resta tagliato
+INTERLINEA_TITOLO = 1.05      # uguale al line-height di .libro-titolo
+SICUREZZA_TITOLO = 1.03       # piccolo margine sulle misure, per non sfiorare i bordi
 
 
 def errore(msg):
@@ -1113,7 +1126,8 @@ def altezza_libro(libro):
 
 
 def corpo_testo_dorso(spessore):
-    """Dimensione del testo sul dorso: cresce con lo spessore, da 11 a 15px."""
+    """Corpo pieno del titolo sul dorso: cresce con lo spessore, da 11 a 15px.
+    Per i titoli lunghi render_dorso lo riduce o manda il titolo su due righe."""
     return max(11, min(15, round(spessore * 0.44)))
 
 
@@ -1212,14 +1226,81 @@ def apri_scheda(libro, lingua, T, contenuto):
             % (esc(libro["slug"]), contenuto, esc(descrizione_libro(libro, lingua, T))))
 
 
+def lunghezza_titolo(testo, stile):
+    """Lunghezza del titolo in em: moltiplicata per il corpo da' i pixel."""
+    if stile == "mono":
+        return max(0.1, len(testo) * 0.6)
+    spazio = 0.6 if stile == "corsivo" else 0.45
+    return max(0.1, sum(spazio if c == " " else LARGHEZZA_CARATTERE.get(c, 0.6) for c in testo))
+
+
+def dividi_titolo(testo, stile):
+    """Divide il titolo in due righe a uno spazio, nel punto che rende piu'
+    corta la riga piu' lunga. None se il titolo e' una parola sola."""
+    parole = testo.split()
+    if len(parole) < 2:
+        return None
+    migliore = None
+    for i in range(1, len(parole)):
+        righe = (" ".join(parole[:i]), " ".join(parole[i:]))
+        piu_lunga = max(lunghezza_titolo(r, stile) for r in righe)
+        if migliore is None or piu_lunga < migliore[0]:
+            migliore = (piu_lunga, righe)
+    return migliore[1]
+
+
+def impagina_titolo(testo, stile, lunghezza, spessore, corpo_pieno):
+    """Corpo e righe del titolo in uno spazio lungo `lunghezza` e largo
+    `spessore` pixel. Prima riduce il corpo su una riga fino a
+    CORPO_MINIMO_UNA_RIGA; se non basta prova due righe. Ritorna (corpo, righe):
+    righe vale 1 o 2, oppure 0 se il titolo non entra e resta tagliato."""
+    corpo = min(corpo_pieno, lunghezza / (lunghezza_titolo(testo, stile) * SICUREZZA_TITOLO))
+    if corpo >= CORPO_MINIMO_UNA_RIGA:
+        return corpo, 1
+    divise = dividi_titolo(testo, stile)
+    if divise:
+        piu_lunga = max(lunghezza_titolo(r, stile) for r in divise) * SICUREZZA_TITOLO
+        corpo = min(corpo_pieno, lunghezza / piu_lunga, (spessore - 2) / (2 * INTERLINEA_TITOLO))
+        if corpo >= CORPO_MINIMO_DUE_RIGHE:
+            return corpo, 2
+    return corpo_pieno, 0
+
+
 def render_dorso(libro, lingua, T, classe, w, h, fs, extra_stile=""):
     ed = libro["edizioni"][lingua]
+    testo, stile = ed["dorso_titolo"], ed["dorso_stile"]
+    # il titolo corre lungo l'altezza del libro: per un dorso dritto e' h,
+    # per un libro disteso e' w; l'altra misura e' lo spessore
+    lunghezza, spessore = (w, h) if classe == "libro--disteso" else (h, w)
+    spazio = lunghezza - 2 * MARGINE_TESTO_DORSO
+    largo = impagina_titolo(testo, stile, spazio, spessore, fs)
+    telefono = impagina_titolo(testo, stile, spazio * SCALA_MOBILE,
+                               max(LARGHEZZA_TOCCO, spessore * SCALA_MOBILE),
+                               max(CORPO_MINIMO_TELEFONO, fs * SCALA_MOBILE))
+    tagliato = [nome for nome, (_, righe) in (("schermo largo", largo), ("telefono", telefono)) if righe == 0]
+    classi = "libro-titolo"
+    if tagliato:
+        # un titolo che non entra da qualche parte si comporta ovunque allo
+        # stesso modo: corpo pieno, una riga, puntini
+        inglese = lingua != "it"
+        avviso("libreria: il titolo sul dorso di %s%s non entra neanche su due righe (%s) e resta "
+               "tagliato, accorcialo con 'dorso_titolo%s'"
+               % (libro["slug"], " nel sito inglese" if inglese else "", ", ".join(tagliato),
+                  "_en" if inglese else ""))
+        largo, telefono = (fs, 1), (max(CORPO_MINIMO_TELEFONO, fs * SCALA_MOBILE), 1)
+        classi += " libro-titolo--taglia"
+    if largo[1] == 2:
+        classi += " libro-titolo--due"
+    if telefono[1] == 2:
+        classi += " libro-titolo--due-m"
+    divise = dividi_titolo(testo, stile) if 2 in (largo[1], telefono[1]) else None
+    titolo = ('<span class="riga">%s</span> <span class="riga">%s</span>' % (esc(divise[0]), esc(divise[1]))
+              if divise else esc(testo))
     dorso = ('<span class="libro-dorso libro-dorso--%s libro-dorso--%s" aria-hidden="true">'
-             '<span class="libro-titolo">%s</span></span>'
-             % (ed["dorso_stile"], ed["dorso_lettura"], esc(ed["dorso_titolo"])))
-    return ('<li class="libro %s" style="--w:%d;--h:%d;--fs:%d;--colore:%s;--testo:%s%s">%s</li>'
-            % (classe, w, h, fs, ed["dorso_colore"], ed["dorso_testo"], extra_stile,
-               apri_scheda(libro, lingua, T, dorso)))
+             '<span class="%s">%s</span></span>' % (stile, ed["dorso_lettura"], classi, titolo))
+    return ('<li class="libro %s" style="--w:%d;--h:%d;--t:%g;--tm:%g;--colore:%s;--testo:%s%s">%s</li>'
+            % (classe, w, h, round(largo[0], 2), round(telefono[0], 2), ed["dorso_colore"],
+               ed["dorso_testo"], extra_stile, apri_scheda(libro, lingua, T, dorso)))
 
 
 def render_elemento_libreria(el, per_nome, lingua, T):
