@@ -9,6 +9,8 @@ Nome del file con lettere, numeri, trattini e punti, senza spazi. Se il nome in 
 
 Dopo aver aggiunto un'immagine lancia `python3 tools/ottimizza-immagini.py`. Lo script taglia i bordi trasparenti attorno all'oggetto, porta l'altezza a 440 px se è più alta e salva in webp conservando la trasparenza. Se il file era un png, il nome diventa .webp: lo script te lo scrive e in `content/libreria.md` usi il nome nuovo. Lanciarlo più volte non cambia più nulla.
 
-Per scontornare una foto con iPhone apri l'app Foto, tieni premuto sull'oggetto e scegli Condividi: ottieni un png con lo sfondo trasparente.
+Per scontornare una foto con iPhone apri l'app Foto, tieni premuto sull'oggetto e scegli Condividi: ottieni un png con lo sfondo trasparente. Dal Mac fai clic destro sulla foto nel Finder, poi Azioni rapide e Rimuovi sfondo. Fotografa l'oggetto intero, di fronte, all'altezza del suo centro e senza ombra sotto.
+
+La guida passo per passo, con un esempio di mensola e le altezze consigliate, è nel README alla sezione "Aggiungere una decorazione".
 
 Questo file può restare qui, viene ignorato dal build.

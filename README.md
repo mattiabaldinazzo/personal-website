@@ -187,7 +187,9 @@ Tutti i campi del dorso hanno la versione `_en` per l'edizione inglese.
 
 Dall'ISBN il build crea il link: amazon.it per `isbn`, amazon.com per `isbn_en`. Per i libri stampati il codice Amazon coincide con l'ISBN a 10 cifre, quindi il link si crea dagli ISBN a 10 cifre e da quelli a 13 che iniziano con 978. Per un ISBN che inizia con 979 il build ti avvisa: scrivi il link a mano in `amazon` o `amazon_en`.
 
-Un link scritto a mano vince sempre sull'ISBN e deve iniziare con `https://`. Se c'è `copertina_en` ma manca il link inglese, il build ti avvisa e il sito inglese usa il link italiano.
+L'ISBN lo trovi sul retro del libro, vicino al codice a barre, oppure nella pagina Amazon del libro, tra i dettagli del prodotto.
+
+Un link scritto a mano vince sempre sull'ISBN e deve iniziare con `https://`. Tienilo solo fino al codice che segue `/dp/`, senza la parte lunga che Amazon aggiunge dopo. Se c'è `copertina_en` ma manca il link inglese, il build ti avvisa e il sito inglese usa il link italiano.
 
 ### Scheda del libro
 
@@ -219,7 +221,7 @@ padre-ricco-padre-povero
 
 Una riga con il nome di un libro lo mette sulla mensola con il dorso dritto. Dopo i due punti puoi scrivere `copertina`, per mostrarlo di fronte, oppure `disteso`, per sdraiarlo. Più libri distesi di fila formano una pila e il primo che scrivi sta in cima.
 
-`decorazione: vaso.webp, 60%` mette tra i libri un'immagine di `images/decorazioni/`, alta il 60% della mensola. Le regole per preparare le immagini sono in `images/decorazioni/LEGGIMI.md`.
+`decorazione: vaso.webp, 60%` mette tra i libri un'immagine di `images/decorazioni/`, alta il 60% della mensola. Come preparare l'immagine e scegliere l'altezza è spiegato in "Aggiungere una decorazione".
 
 Le righe che iniziano con `#` sono commenti. Un libro che non compare nel file finisce in fondo all'ultima mensola con il dorso dritto, e il build te lo segnala. Senza il file tutti i libri stanno su una mensola, in ordine di nome file.
 
@@ -238,6 +240,66 @@ Sotto i 680 px la libreria si riduce all'80%, il valore di `SCALA_MOBILE` in `bu
 ### Misure
 
 Le misure sono costanti in `build.py`, in pixel da schermo largo. `ALTEZZE_FORMATO` dà l'altezza di tascabile, standard e grande. `SPESSORE_PER_PAGINA` trasforma le pagine in spessore, tra `SPESSORE_MINIMO` (24 px, la misura minima da toccare) e `SPESSORE_MASSIMO`: 300 pagine fanno 26 px. Libri dello stesso formato hanno altezze leggermente diverse, calcolate dal nome del file, quindi identiche a ogni build. Una copertina esposta prende le proporzioni dall'immagine italiana, così occupa lo stesso spazio nelle due lingue. I colori del legno sono variabili in testa alla sezione Letture di `styles.css`.
+
+## Aggiungere una decorazione
+
+Una decorazione è un oggetto tra i libri: un vaso, una statua, una lampada, una pianta. Non si clicca e non ha testo alternativo, perché serve solo all'aspetto della libreria.
+
+### 1. Prepara l'immagine
+
+Serve un png o un webp con lo sfondo trasparente. Da iPhone apri la foto nell'app Foto, tieni premuto sull'oggetto, scegli Condividi e mandala al Mac con AirDrop: arriva un png già scontornato. Dal Mac fai clic destro sulla foto nel Finder, poi Azioni rapide e Rimuovi sfondo.
+
+Fotografa l'oggetto intero, di fronte, all'altezza del suo centro e senza ombra sotto. I dorsi si vedono di fronte: un vaso fotografato dall'alto mostra l'apertura e sembra appoggiato su un'altra mensola. Se prendi immagini dal web, usa solo quelle con una licenza che ne permette l'uso.
+
+### 2. Copiala nella cartella
+
+Copia il file in `images/decorazioni/` con un nome senza spazi, per esempio `vaso.png`.
+
+### 3. Lancia lo script delle immagini
+
+```bash
+python3 tools/ottimizza-immagini.py
+```
+
+Lo script taglia i bordi trasparenti attorno all'oggetto, porta l'altezza a 440 px e salva in webp conservando la trasparenza. Il png viene sostituito dal webp e lo script ti scrive il nome da usare, per esempio `in content/libreria.md scrivi vaso.webp`. Se compare `No module named 'PIL'`, lancia prima `pip install pillow`.
+
+### 4. Mettila sulla mensola
+
+In `content/libreria.md` scrivi la riga nel punto della mensola dove vuoi l'oggetto. Il numero è l'altezza rispetto allo spazio libero della mensola.
+
+```markdown
+--- mensola ---
+decorazione: busto.webp, 85%
+colloqui-con-se-stesso
+lunica-regola
+padre-ricco-padre-povero
+la-mucca-viola: copertina
+larte-della-guerra
+rework: disteso
+greenlights: disteso
+scrum: disteso
+decorazione: vaso.webp, 55%
+```
+
+Questa mensola usa gli 8 libri del sito, una copertina esposta, una pila da tre e due decorazioni, ed è piena intorno al 90%. Il valore esatto dipende dalla forma delle decorazioni: a parità di altezza, un oggetto più largo occupa più spazio. Con gli stessi 8 libri tutti di dorso la mensola sarebbe piena per un terzo.
+
+Per l'altezza parti da questi valori. Un libro standard occupa circa l'87% dello spazio e un tascabile il 77%. Un vaso piccolo sta bene tra il 45 e il 55%, una pianta tra il 55 e il 70%, un globo tra il 60 e il 75%, un busto o una statua tra l'80 e il 95%, una lampada tra il 90 e il 100%.
+
+### 5. Controlla e pubblica
+
+```bash
+python3 build.py
+python3 -m http.server 8000 --directory _site
+```
+
+Se il build scrive che la mensola è piena oltre il 100%, su schermo largo la mensola va a capo su una riga in più. Togli un elemento, oppure abbassa la decorazione: si stringe in proporzione. Quando il risultato ti piace, aggiungi al commit i file per nome:
+
+```bash
+git add images/decorazioni/vaso.webp content/libreria.md
+git commit -m "Libreria: vaso sulla prima mensola" && git push
+```
+
+Lo script rigenera anche le versioni ridotte delle altre immagini: aggiungendo i file per nome, nel commit entra solo quello che hai cambiato.
 
 ## Cambiare la foto profilo
 
