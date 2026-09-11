@@ -125,10 +125,14 @@ ALTEZZA_LIBERA = 224          # spazio utile sopra ogni mensola
 ALTEZZA_ASSE = 14             # spessore della mensola
 ALTEZZE_FORMATO = {"tascabile": 172, "standard": 194, "grande": 214}
 SPESSORE_PER_PAGINA = 0.085   # 300 pagine, 26px
-SPESSORE_MINIMO = 20
+SPESSORE_MINIMO = 24          # misura minima di un bersaglio da toccare secondo le WCAG 2.2
 SPESSORE_MASSIMO = 58
 MARGINE_DORSO = 1             # per lato: 2px tra due dorsi vicini
 MARGINE_OGGETTO = 8           # per lato, attorno a copertine, pile e decorazioni
+# Sotto i 680px la libreria si riduce di questo fattore. Dorsi e libri distesi
+# restano comunque larghi o alti almeno LARGHEZZA_TOCCO, cosi' si toccano bene.
+SCALA_MOBILE = 0.8
+LARGHEZZA_TOCCO = 24
 
 
 def errore(msg):
@@ -1170,18 +1174,23 @@ def misura_libreria(mensole, libri):
 def misura_pila(pila, per_nome, numero):
     """Libri distesi uno sopra l'altro. Se superano l'altezza della mensola
     la pila si divide in pile vicine."""
+    # Il controllo usa le misure da telefono: ridotte, ma mai sotto la misura
+    # minima da toccare. Se la pila entra su telefono entra anche su schermo
+    # largo, quindi la divisione e' la stessa ovunque.
+    limite = ALTEZZA_LIBERA * SCALA_MOBILE
     pile = [[]]
     altezza = 0
     for slug in pila["libri"]:
         libro = per_nome[slug]
         spessore = spessore_dorso(libro["pagine"])
-        if pile[-1] and altezza + spessore > ALTEZZA_LIBERA:
+        spessore_mobile = max(LARGHEZZA_TOCCO, spessore * SCALA_MOBILE)
+        if pile[-1] and altezza + spessore_mobile > limite:
             pile.append([])
             altezza = 0
         pile[-1].append({"slug": slug, "w": altezza_libro(libro), "h": spessore,
                          "fs": corpo_testo_dorso(spessore),
                          "sposta": indice_stabile("pila:" + slug, 9)})
-        altezza += spessore
+        altezza += spessore_mobile
     if len(pile) > 1:
         avviso("libreria.md: una pila della mensola %d e' piu' alta della mensola, la divido in %d pile"
                % (numero, len(pile)))
@@ -1289,7 +1298,7 @@ def render_libreria(misurate, libri, lingua, T):
         voci = "\n            ".join(render_elemento_libreria(el, per_nome, lingua, T) for el in elementi)
         mensole.append('<ul class="mensola" role="list">\n            %s\n          </ul>' % voci)
     return ('<div class="libreria reveal" data-libreria data-righe="%d" data-righe-clic="%d"'
-            ' style="--riga:%d;--asse:%d">\n'
+            ' style="--riga:%d;--asse:%d;--scala-mobile:%g;--tocco:%d">\n'
             '          <div class="libreria-interno">\n'
             '          %s\n'
             '          </div>\n'
@@ -1300,6 +1309,7 @@ def render_libreria(misurate, libri, lingua, T):
             '        </div>\n'
             '        <p class="visually-hidden" aria-live="polite" data-libreria-annuncio data-testo="%s"></p>'
             % (RIGHE_VISIBILI, RIGHE_PER_CLIC, ALTEZZA_LIBERA + ALTEZZA_ASSE, ALTEZZA_ASSE,
+               SCALA_MOBILE, LARGHEZZA_TOCCO,
                "\n          ".join(mensole),
                esc(T["libri_mostra_altro"]), esc(T["libri_mostra_meno"]), esc(T["libri_aggiunti"])))
 

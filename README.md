@@ -227,11 +227,15 @@ Il build si ferma se un nome non corrisponde a nessun libro, se un libro compare
 
 All'apertura si vedono 3 righe della libreria. "Mostra altro" ne aggiunge 3 a ogni clic. "Mostra meno" compare dal primo clic, torna subito alle prime 3 righe e riporta in vista l'inizio della libreria. Con 3 righe o meno i bottoni non compaiono. Le soglie sono le costanti `RIGHE_VISIBILI` e `RIGHE_PER_CLIC` in `build.py`.
 
-Su schermo largo una riga è una mensola. Una mensola larga 776 px contiene circa 27 dorsi da 300 pagine. Se scrivi più elementi di quanti ne entrano, la mensola va a capo su una riga in più e il build ti avvisa con la percentuale di riempimento. Una pila più alta della mensola viene divisa in pile vicine, sempre con un avviso. Su schermi più stretti le mensole vanno a capo da sole; senza JavaScript si vede tutta la libreria.
+Su schermo largo una riga è una mensola. Una mensola larga 776 px contiene circa 27 dorsi da 300 pagine. Se scrivi più elementi di quanti ne entrano, la mensola va a capo su una riga in più e il build ti avvisa con la percentuale di riempimento. Una pila più alta della mensola viene divisa in pile vicine, sempre con un avviso. Su schermi più stretti le mensole vanno a capo da sole e le righe si contano di nuovo quando cambia la larghezza, per esempio ruotando il telefono. Senza JavaScript si vede tutta la libreria.
+
+### Telefono
+
+Sotto i 680 px la libreria si riduce all'80%, il valore di `SCALA_MOBILE` in `build.py`: una riga è alta circa 190 px e ne entrano 3 in una schermata. Ogni libro resta un bersaglio da almeno 24 px, la misura minima delle WCAG 2.2, fissata in `LARGHEZZA_TOCCO`: i dorsi sottili si allargano e i libri distesi si alzano. Il testo sui dorsi non scende sotto gli 11 px. Una pila si divide già calcolando le misure da telefono, così la divisione è la stessa su ogni schermo. Da 680 px in su la libreria torna alle misure piene.
 
 ### Misure
 
-Le misure sono costanti in `build.py`, in pixel da schermo largo. `ALTEZZE_FORMATO` dà l'altezza di tascabile, standard e grande. `SPESSORE_PER_PAGINA` trasforma le pagine in spessore, tra `SPESSORE_MINIMO` e `SPESSORE_MASSIMO`: 300 pagine fanno 26 px. Libri dello stesso formato hanno altezze leggermente diverse, calcolate dal nome del file, quindi identiche a ogni build. Una copertina esposta prende le proporzioni dall'immagine italiana, così occupa lo stesso spazio nelle due lingue. I colori del legno sono variabili in testa alla sezione Letture di `styles.css`.
+Le misure sono costanti in `build.py`, in pixel da schermo largo. `ALTEZZE_FORMATO` dà l'altezza di tascabile, standard e grande. `SPESSORE_PER_PAGINA` trasforma le pagine in spessore, tra `SPESSORE_MINIMO` (24 px, la misura minima da toccare) e `SPESSORE_MASSIMO`: 300 pagine fanno 26 px. Libri dello stesso formato hanno altezze leggermente diverse, calcolate dal nome del file, quindi identiche a ogni build. Una copertina esposta prende le proporzioni dall'immagine italiana, così occupa lo stesso spazio nelle due lingue. I colori del legno sono variabili in testa alla sezione Letture di `styles.css`.
 
 ## Cambiare la foto profilo
 
