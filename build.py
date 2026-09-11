@@ -7,9 +7,11 @@ Genera il sito statico bilingue in _site/ a partire da:
   - content/testi/it.md     (testi fissi dell'interfaccia in italiano)
   - content/testi/en.md     (gli stessi testi in inglese, stesse chiavi)
   - content/progetti/*.md   (una scheda progetto per file, due lingue nel file)
-  - content/libri/*.md      (un libro per file)
+  - content/libri/*.md      (un libro per file, edizione inglese con i campi _en)
+  - content/libreria.md     (disposizione dei libri sulle mensole)
   - content/progressi/*.md  (un progresso per file, con barra di avanzamento)
   - images/profilo/         (una sola immagine: la foto in apertura di pagina)
+  - images/decorazioni/     (oggetti tra i libri, citati in content/libreria.md)
 
 Due lingue nello stesso file di contenuto:
   - nel frontmatter: titolo / titolo_en, descrizione / descrizione_en, ...
@@ -31,6 +33,7 @@ import html
 import re
 import shutil
 import sys
+import zlib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -80,6 +83,31 @@ VARIANTI = {
     "images/projects": [480],
     "images/books": [220],
 }
+
+# Libreria della sezione Letture: valori ammessi nei file dei libri e in
+# content/libreria.md.
+SEPARATORE_MENSOLA = re.compile(r"^\s*---\s*mensola\s*---\s*$")
+VISTE_LIBRO = ("dorso", "copertina", "disteso")
+FORMATI = ("tascabile", "standard", "grande")
+STILI_DORSO = ("normale", "grassetto", "corsivo", "mono")
+LETTURE_DORSO = ("ascendente", "discendente")
+PAGINE_PREDEFINITE = 300
+FORMATO_PREDEFINITO = "standard"
+STILE_DORSO_PREDEFINITO = "grassetto"
+# Verso del titolo sul dorso quando il file non lo indica: le edizioni
+# italiane si leggono dal basso verso l'alto, quelle inglesi dall'alto in basso.
+LETTURA_PREDEFINITA = {"it": "ascendente", "en": "discendente"}
+# Dorsi senza colore: uno di questi toni, scelto dal nome del file e quindi
+# sempre lo stesso a ogni build.
+TAVOLOZZA_DORSI = ("#2F4F3E", "#7A2E3B", "#2B4A6B", "#A8803F",
+                   "#4A5561", "#E8DFC8", "#3F5E5A", "#C9B79C")
+# Testo sul dorso: carta o inchiostro del sito, quello con piu' contrasto.
+TESTO_DORSO_CHIARO = "#FAF9F5"
+TESTO_DORSO_SCURO = "#1C1B18"
+# Link costruiti dall'ISBN: amazon.it per i campi base, amazon.com per quelli _en.
+NEGOZI_AMAZON = {"": "https://www.amazon.it/dp/%s", "_en": "https://www.amazon.com/dp/%s"}
+CARTELLA_DECORAZIONI = "images/decorazioni"
+ESTENSIONI_DECORAZIONI = (".webp", ".png", ".jpg", ".jpeg")
 
 
 def errore(msg):
@@ -403,6 +431,197 @@ def carica_progetti():
     return progetti
 
 
+def leggi_voto(meta, origine):
+    """Voto da 0 a 5 a mezzi punti. Accetta anche la virgola: 4,5."""
+    grezzo = meta.get("voto", "").strip()
+    if not grezzo:
+        return 5.0  # il campo mancante e' gia' segnalato come errore
+    try:
+        voto = float(grezzo.replace(",", "."))
+    except ValueError:
+        voto = -1.0
+    if not 0 <= voto <= 5 or voto * 2 != int(voto * 2):
+        errore("%s: 'voto' va da 0 a 5 a mezzi punti, per esempio 4 o 4,5 (trovato: %r)"
+               % (origine.name, grezzo))
+        return 5.0
+    return voto
+
+
+def formatta_voto(voto, lingua):
+    """4 resta 4; 4.5 diventa 4,5 in italiano e 4.5 in inglese."""
+    testo = "%d" % voto if float(voto).is_integer() else "%.1f" % voto
+    return testo.replace(".", ",") if lingua == "it" else testo
+
+
+def testo_voto(T, voto, lingua):
+    """Frase del voto per i lettori di schermo. Accetta sia %s sia il vecchio
+    %d nei file dei testi, cosi' un file dei testi non aggiornato non rompe
+    il build."""
+    return T["libri_voto"].replace("%d", "%s") % formatta_voto(voto, lingua)
+
+
+def leggi_intero_positivo(meta, chiave, origine, predefinito):
+    grezzo = meta.get(chiave, "").strip()
+    if not grezzo:
+        return predefinito
+    if not re.fullmatch(r"\d+", grezzo) or int(grezzo) == 0:
+        errore("%s: '%s' deve essere un numero intero maggiore di zero (trovato: %r)"
+               % (origine.name, chiave, grezzo))
+        return predefinito
+    return int(grezzo)
+
+
+def leggi_scelta(meta, chiave, ammessi, origine, predefinito):
+    """Campo che accetta solo alcune parole, per esempio formato o dorso_stile."""
+    grezzo = meta.get(chiave, "").strip().lower()
+    if not grezzo:
+        return predefinito
+    if grezzo not in ammessi:
+        errore("%s: '%s' accetta solo %s (trovato: %r)"
+               % (origine.name, chiave, ", ".join(ammessi), grezzo))
+        return predefinito
+    return grezzo
+
+
+def leggi_esadecimale(meta, chiave, origine):
+    grezzo = meta.get(chiave, "").strip()
+    if not grezzo:
+        return ""
+    if not COLORE_HEX.match(grezzo):
+        errore("%s: '%s' deve essere un esadecimale tipo #2F4F3E (trovato: %r)"
+               % (origine.name, chiave, grezzo))
+        return ""
+    cifre = grezzo.lstrip("#")
+    if len(cifre) == 3:
+        cifre = "".join(c * 2 for c in cifre)
+    return "#" + cifre.upper()
+
+
+def luminanza(colore):
+    """Luminanza relativa secondo le WCAG: 0 e' il nero, 1 il bianco."""
+    cifre = colore.lstrip("#")
+    canali = []
+    for i in (0, 2, 4):
+        c = int(cifre[i:i + 2], 16) / 255
+        canali.append(c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4)
+    return 0.2126 * canali[0] + 0.7152 * canali[1] + 0.0722 * canali[2]
+
+
+def colore_testo_dorso(sfondo):
+    """Carta o inchiostro del sito: sceglie quello con piu' contrasto sul dorso."""
+    base = luminanza(sfondo)
+
+    def contrasto(colore):
+        altra = luminanza(colore)
+        return (max(base, altra) + 0.05) / (min(base, altra) + 0.05)
+
+    return max((TESTO_DORSO_CHIARO, TESTO_DORSO_SCURO), key=contrasto)
+
+
+def indice_stabile(testo, quanti):
+    """Numero da 0 a quanti-1 ricavato dal testo, uguale a ogni build.
+    hash() di Python cambia a ogni avvio, zlib.crc32 no."""
+    return zlib.crc32(testo.encode("utf-8")) % quanti
+
+
+def isbn_valido(isbn):
+    """Controlla la cifra finale. Rileva ogni errore di battitura su una cifra."""
+    if re.fullmatch(r"\d{13}", isbn):
+        somma = sum(int(c) * (1 if i % 2 == 0 else 3) for i, c in enumerate(isbn[:12]))
+        return (10 - somma % 10) % 10 == int(isbn[12])
+    if re.fullmatch(r"\d{9}[\dX]", isbn):
+        somma = sum((10 - i) * int(c) for i, c in enumerate(isbn[:9]))
+        finale = 10 if isbn[9] == "X" else int(isbn[9])
+        return (somma + finale) % 11 == 0
+    return False
+
+
+def isbn10_da_13(isbn13):
+    """ISBN a 10 cifre ricavato da quello a 13. Esiste solo per i codici 978."""
+    if not isbn13.startswith("978"):
+        return ""
+    corpo = isbn13[3:12]
+    somma = sum((10 - i) * int(c) for i, c in enumerate(corpo))
+    finale = (11 - somma % 11) % 11
+    return corpo + ("X" if finale == 10 else str(finale))
+
+
+def leggi_isbn(meta, chiave, origine):
+    """ISBN a 10 o 13 cifre, con o senza trattini e spazi."""
+    grezzo = meta.get(chiave, "").strip()
+    if not grezzo:
+        return ""
+    isbn = re.sub(r"[\s-]", "", grezzo).upper()
+    if not isbn_valido(isbn):
+        errore("%s: '%s' non e' un ISBN valido, controlla le cifre (trovato: %r)"
+               % (origine.name, chiave, grezzo))
+        return ""
+    return isbn
+
+
+def link_amazon(meta, suffisso, origine):
+    """Link al libro su Amazon per i campi base (suffisso "") o inglesi ("_en").
+    Un link scritto a mano vince; altrimenti lo costruisce dall'ISBN, perche'
+    per i libri stampati il codice Amazon coincide con l'ISBN a 10 cifre."""
+    isbn = leggi_isbn(meta, "isbn" + suffisso, origine)
+    manuale = meta.get("amazon" + suffisso, "").strip()
+    if manuale:
+        if not manuale.startswith("https://"):
+            errore("%s: 'amazon%s' deve iniziare con https:// (trovato: %r)"
+                   % (origine.name, suffisso, manuale))
+            return ""
+        return manuale
+    if not isbn:
+        return ""
+    if len(isbn) == 13:
+        isbn10 = isbn10_da_13(isbn)
+        if not isbn10:
+            avviso("%s: 'isbn%s' inizia con 979 e non ha un codice a 10 cifre, "
+                   "scrivi il link in 'amazon%s'" % (origine.name, suffisso, suffisso))
+            return ""
+        isbn = isbn10
+    return NEGOZI_AMAZON[suffisso] % isbn
+
+
+def titolo_dorso(meta, lingua):
+    """Testo sul dorso. Nel sito inglese preferisce un titolo inglese:
+    dorso_titolo_en, poi titolo_en, poi dorso_titolo e titolo. Cosi' un
+    titolo breve scritto per l'edizione italiana non compare sul sito inglese
+    quando esiste il titolo inglese."""
+    if lingua == "it":
+        return meta.get("dorso_titolo", "") or meta.get("titolo", "")
+    return (meta.get("dorso_titolo_en", "") or meta.get("titolo_en", "")
+            or meta.get("dorso_titolo", "") or meta.get("titolo", ""))
+
+
+def edizione_libro(meta, controllati, slug, lingua):
+    """Quello che il sito mostra di un libro in una lingua.
+
+    Stessa regola del resto del sito: nel sito inglese ogni campo _en
+    sostituisce quello base e, se manca, vale quello base. Cosi' un libro
+    ha due titoli, due autori, due copertine, due link e due dorsi, mentre
+    voto, pagine e formato restano unici e la disposizione non cambia tra
+    le lingue. Unica eccezione il titolo sul dorso, vedi titolo_dorso()."""
+    def controllato(chiave):
+        if lingua != "it" and controllati["_en"][chiave]:
+            return controllati["_en"][chiave]
+        return controllati[""][chiave]
+
+    colore = (controllato("colore")
+              or TAVOLOZZA_DORSI[indice_stabile(slug, len(TAVOLOZZA_DORSI))])
+    return {
+        "titolo": campo(meta, "titolo", lingua),
+        "autore": campo(meta, "autore", lingua),
+        "copertina": campo(meta, "copertina", lingua),
+        "link": controllato("link"),
+        "dorso_titolo": titolo_dorso(meta, lingua),
+        "dorso_colore": colore,
+        "dorso_testo": colore_testo_dorso(colore),
+        "dorso_stile": controllato("stile") or STILE_DORSO_PREDEFINITO,
+        "dorso_lettura": controllato("lettura") or LETTURA_PREDEFINITA.get(lingua, "discendente"),
+    }
+
+
 def carica_libri():
     cartella = CONTENT / "libri"
     libri = []
@@ -413,25 +632,181 @@ def carica_libri():
         for c in ("titolo", "autore", "voto", "copertina"):
             if not meta.get(c):
                 errore("%s: manca il campo '%s'" % (f.name, c))
-        try:
-            voto = int(meta.get("voto", "0"))
-            if not 1 <= voto <= 5:
-                raise ValueError
-        except ValueError:
-            errore("%s: 'voto' deve essere un intero da 1 a 5" % f.name)
-            voto = 5
+        slug = slug_da_file(f)
+        if not re.fullmatch(r"[a-z0-9-]+", slug or ""):
+            errore("%s: nome file non valido, usa solo minuscole, numeri e trattini" % f.name)
+        if slug == "decorazione":
+            errore("%s: 'decorazione' e' una parola riservata di libreria.md, rinomina il file" % f.name)
+        voto = leggi_voto(meta, f)
+        pagine = leggi_intero_positivo(meta, "pagine", f, PAGINE_PREDEFINITE)
+        formato = leggi_scelta(meta, "formato", FORMATI, f, FORMATO_PREDEFINITO)
         verifica_immagine(meta.get("copertina"), f)
+        verifica_immagine(meta.get("copertina_en"), f)
+
+        # Ogni campo si controlla una volta sola: "" sono i campi base, "_en"
+        # quelli inglesi. Le edizioni delle due lingue si compongono sotto.
+        controllati = {}
+        for suffisso in ("", "_en"):
+            controllati[suffisso] = {
+                "colore": leggi_esadecimale(meta, "dorso_colore" + suffisso, f),
+                "stile": leggi_scelta(meta, "dorso_stile" + suffisso, STILI_DORSO, f, ""),
+                "lettura": leggi_scelta(meta, "dorso_lettura" + suffisso, LETTURE_DORSO, f, ""),
+                "link": link_amazon(meta, suffisso, f),
+            }
+        if meta.get("copertina_en") and controllati[""]["link"] and not controllati["_en"]["link"]:
+            avviso("%s: c'e' 'copertina_en' ma mancano 'amazon_en' e 'isbn_en', "
+                   "il sito inglese usa il link italiano" % f.name)
+
         nota_it, nota_en = dividi_corpo(corpo)
         if manca_traduzione(meta, "titolo"):
             avviso("%s: manca 'titolo_en', in inglese uso il titolo italiano" % f.name)
         libri.append({
+            "slug": slug,
             "meta": meta,
-            "autore": meta.get("autore", ""),
             "voto": voto,
-            "copertina": meta.get("copertina", ""),
+            "pagine": pagine,
+            "formato": formato,
             "nota": {"it": nota_it, "en": nota_en or nota_it},
+            "edizioni": {lingua: edizione_libro(meta, controllati, slug, lingua)
+                         for lingua, _ in LINGUE},
         })
+    visti = set()
+    for b in libri:
+        if b["slug"] in visti:
+            errore("due file dei libri hanno lo stesso nome senza numero: %s" % b["slug"])
+        visti.add(b["slug"])
     return libri
+
+
+# ------------------------------------------------------------------ libreria
+
+def carica_libreria(libri):
+    """Legge content/libreria.md e ritorna la lista delle mensole.
+
+    Ogni mensola e' una lista di elementi, nell'ordine del file:
+      {"tipo": "libro", "slug": "rework", "vista": "dorso"}      (o "copertina")
+      {"tipo": "pila", "libri": ["greenlights", "scrum"]}        il primo in cima
+      {"tipo": "decorazione", "immagine": "/images/decorazioni/vaso.webp", "altezza": 60}
+    I libri che non compaiono nel file finiscono in fondo all'ultima mensola."""
+    per_nome = {b["slug"]: b for b in libri}
+    f = CONTENT / "libreria.md"
+    mensole = []
+    usati = {}
+    if not f.exists():
+        avviso("manca content/libreria.md: metto tutti i libri su una mensola, in ordine di nome file")
+    else:
+        corrente = None
+        righe = f.read_text(encoding="utf-8-sig").splitlines()
+        for numero_riga, riga in enumerate(righe, 1):
+            testo = riga.strip()
+            if not testo or testo.startswith("#"):
+                continue
+            dove = "libreria.md, riga %d" % numero_riga
+            if SEPARATORE_MENSOLA.match(testo):
+                corrente = []
+                mensole.append(corrente)
+                continue
+            if testo.startswith("---"):
+                errore("%s: separatore non riconosciuto, per una mensola nuova scrivi --- mensola ---"
+                       % dove)
+                continue
+            if corrente is None:
+                # righe scritte prima del primo separatore: aprono comunque una mensola
+                corrente = []
+                mensole.append(corrente)
+            nome, _, opzione = testo.partition(":")
+            nome = nome.strip().lower()
+            opzione = opzione.strip()
+            if nome == "decorazione":
+                elemento = leggi_decorazione(opzione, dove)
+                if elemento:
+                    corrente.append(elemento)
+                continue
+            if nome not in per_nome:
+                errore("%s: nessun libro si chiama '%s'. Usa il nome del file senza numero e senza .md; "
+                       "per una decorazione scrivi decorazione: vaso.webp, 60%%" % (dove, nome))
+                continue
+            if nome in usati:
+                errore("%s: '%s' compare gia' alla riga %d" % (dove, nome, usati[nome]))
+                continue
+            vista = opzione.lower() or "dorso"
+            if vista not in VISTE_LIBRO:
+                errore("%s: opzione '%s' sconosciuta, scrivi copertina oppure disteso" % (dove, opzione))
+                continue
+            usati[nome] = numero_riga
+            corrente.append({"tipo": "libro", "slug": nome, "vista": vista})
+
+    vuote = sum(1 for m in mensole if not m)
+    if vuote:
+        avviso("libreria.md: ignoro le mensole senza elementi (%d)" % vuote)
+        mensole = [m for m in mensole if m]
+
+    mancanti = [b["slug"] for b in libri if b["slug"] not in usati]
+    if mancanti:
+        if not mensole:
+            mensole.append([])
+        for nome in mancanti:
+            mensole[-1].append({"tipo": "libro", "slug": nome, "vista": "dorso"})
+        if f.exists():
+            avviso("libreria.md: questi libri non compaiono nel file e vanno in fondo "
+                   "all'ultima mensola: %s" % ", ".join(mancanti))
+    return [raggruppa_pile(m) for m in mensole]
+
+
+def leggi_decorazione(valore, dove):
+    """decorazione: vaso.webp, 60%  diventa l'immagine images/decorazioni/vaso.webp,
+    alta il 60% della mensola."""
+    parti = [p.strip() for p in valore.split(",")]
+    if len(parti) != 2 or not parti[0]:
+        errore("%s: scrivi la decorazione cosi': decorazione: vaso.webp, 60%%" % dove)
+        return None
+    nome_file, altezza = parti
+    estensione = Path(nome_file).suffix.lower()
+    if (not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", nome_file)
+            or estensione not in ESTENSIONI_DECORAZIONI):
+        errore("%s: '%s' non va bene, usa un file webp, png o jpg con un nome senza spazi"
+               % (dove, nome_file))
+        return None
+    misura = re.fullmatch(r"(\d{1,3})\s*%?", altezza)
+    if not misura or not 1 <= int(misura.group(1)) <= 100:
+        errore("%s: l'altezza della decorazione va da 1%% a 100%% (trovato: %r)" % (dove, altezza))
+        return None
+    percorso = "/%s/%s" % (CARTELLA_DECORAZIONI, nome_file)
+    if not (ROOT / CARTELLA_DECORAZIONI / nome_file).is_file():
+        errore("%s: immagine non trovata: %s" % (dove, percorso))
+        return None
+    if estensione in (".jpg", ".jpeg"):
+        avviso("%s: %s e' un jpg e ha lo sfondo pieno, per scontornarla usa webp o png"
+               % (dove, nome_file))
+    return {"tipo": "decorazione", "immagine": percorso, "altezza": int(misura.group(1))}
+
+
+def raggruppa_pile(elementi):
+    """Libri distesi uno dopo l'altro diventano una pila; il primo scritto sta in cima."""
+    risultato = []
+    for el in elementi:
+        if el["tipo"] == "libro" and el["vista"] == "disteso":
+            if risultato and risultato[-1]["tipo"] == "pila":
+                risultato[-1]["libri"].append(el["slug"])
+            else:
+                risultato.append({"tipo": "pila", "libri": [el["slug"]]})
+        else:
+            risultato.append(el)
+    return risultato
+
+
+def riepilogo_libreria(mensole):
+    libri = pile = decorazioni = 0
+    for mensola in mensole:
+        for el in mensola:
+            if el["tipo"] == "libro":
+                libri += 1
+            elif el["tipo"] == "pila":
+                pile += 1
+                libri += len(el["libri"])
+            else:
+                decorazioni += 1
+    return "mensole %d, libri %d, pile %d, decorazioni %d" % (len(mensole), libri, pile, decorazioni)
 
 
 COLORE_HEX = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
@@ -701,8 +1076,11 @@ def render_toggle_progetti(progetti, T):
 def render_libri(libri, lingua, T):
     voci = []
     for i, b in enumerate(libri):
-        titolo = campo(b["meta"], "titolo", lingua)
-        stelle = "&#9733;" * b["voto"] + "&#9734;" * (5 - b["voto"])
+        ed = b["edizioni"][lingua]
+        # La griglia usa i caratteri stella, che non hanno la mezza stella:
+        # mostra le stelle intere e il testo nascosto dice il voto esatto.
+        piene = int(b["voto"])
+        stelle = "&#9733;" * piene + "&#9734;" * (5 - piene)
         nascosto = " is-hidden" if i >= LIBRI_VISIBILI else ""
         nota = ('<p class="book-note">%s</p>' % inline_md(b["nota"][lingua])) if b["nota"][lingua] else ""
         voci.append(
@@ -715,11 +1093,11 @@ def render_libri(libri, lingua, T):
             '              <p class="book-author">%s</p>\n%s'
             '            </div>\n'
             '          </li>' % (nascosto,
-                                tag_immagine(b["copertina"],
-                                             "%s %s" % (T["libri_copertina"], titolo),
+                                tag_immagine(ed["copertina"],
+                                             "%s %s" % (T["libri_copertina"], ed["titolo"]),
                                              SIZES_LIBRI, 'loading="lazy" decoding="async"'),
-                                esc(T["libri_voto"] % b["voto"]), stelle,
-                                esc(titolo), esc(b["autore"]), nota)
+                                esc(testo_voto(T, b["voto"], lingua)), stelle,
+                                esc(ed["titolo"]), esc(ed["autore"]), nota)
         )
     return "\n          ".join(voci)
 
@@ -921,6 +1299,7 @@ def main():
     testi = carica_testi()
     progetti = carica_progetti()
     libri = carica_libri()
+    libreria = carica_libreria(libri)
     progressi = carica_progressi()
     foto = trova_foto_profilo()
 
@@ -968,6 +1347,7 @@ def main():
     print("  progetti: %d (%d con scheda di dettaglio)" % (len(progetti), n_modali))
     print("  progressi: %d" % len(progressi))
     print("  libri: %d" % len(libri))
+    print("  libreria: %s" % riepilogo_libreria(libreria))
     print("  foto profilo: %s" % foto)
 
 

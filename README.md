@@ -128,15 +128,22 @@ sforzo: alto
 
 ## Aggiungere un libro
 
-Crea `content/libri/09-titolo-libro.md`.
+Crea `content/libri/titolo-libro.md`. Il nome del file senza `.md` è il nome del libro: lo usi in `content/libreria.md` per metterlo su una mensola. Usa solo minuscole, numeri e trattini e non cambiarlo dopo la pubblicazione. Il numero iniziale non serve più, perché l'ordine lo decide la libreria. Nei file che lo hanno viene ignorato: `07-greenlights.md` si chiama `greenlights`.
 
 ```markdown
 ---
 titolo: Titolo del libro
 titolo_en: Book title
 autore: Nome Autore
-voto: 5
+autore_en: Author Name
+voto: 4,5
 copertina: /images/books/titolo.webp
+copertina_en: /images/books/title.webp
+pagine: 320
+formato: standard
+dorso_titolo: Titolo breve
+dorso_colore: "#2F4F3E"
+dorso_stile: grassetto
 ---
 
 Nota facoltativa di una o due righe, mostrata sotto l'autore.
@@ -146,7 +153,67 @@ Nota facoltativa di una o due righe, mostrata sotto l'autore.
 Optional one or two line note, shown under the author.
 ```
 
-Tutti e quattro i campi sono obbligatori, `voto` da 1 a 5. I primi 4 libri sono visibili, gli altri compaiono con "Mostra tutti i libri".
+`titolo`, `autore`, `voto` e `copertina` sono obbligatori, tutti gli altri campi sono facoltativi. I primi 4 libri sono visibili, gli altri compaiono con "Mostra tutti i libri".
+
+Oggi la sezione Letture usa titolo, autore, copertina, voto e nota. Dorso, link e disposizione sono già letti e controllati dal build e servono alla libreria con le mensole.
+
+### Due edizioni, italiana e inglese
+
+Vale la regola del resto del sito: nel sito inglese ogni campo con `_en` sostituisce quello italiano e, se manca, vale quello italiano. Così ogni libro può avere due titoli, due autori, due copertine, due link e due dorsi. Voto, pagine e formato sono unici, quindi la libreria ha la stessa disposizione nelle due lingue.
+
+Il titolo sul dorso ha una regola in più. Nel sito inglese il dorso mostra `dorso_titolo_en`, altrimenti `titolo_en`, altrimenti il titolo italiano. Così un titolo breve scritto per l'edizione italiana non compare sul sito inglese.
+
+Se un libro esiste solo in inglese, scrivi i dati inglesi nei campi senza `_en`: li usano entrambe le lingue. In quel caso aggiungi `dorso_lettura: discendente`.
+
+### Voto
+
+`voto` va da 0 a 5 a mezzi punti. Puoi scriverlo con il punto o con la virgola: `4`, `4.5`, `4,5`. Un valore come `4.3` blocca il build. La griglia attuale mostra solo stelle intere, il testo per i lettori di schermo riporta il voto esatto.
+
+### Dorso
+
+`pagine` decide lo spessore del dorso: senza il campo vale 300. `formato` decide l'altezza e accetta `tascabile`, `standard` o `grande`: senza il campo vale `standard`.
+
+`dorso_titolo` è il testo sul dorso: senza il campo compare il titolo. `dorso_colore` è il colore in esadecimale, anche abbreviato come `#7A9`. Senza il campo il build sceglie uno di 8 toni in base al nome del file, sempre lo stesso. Il testo sul dorso diventa chiaro o scuro da solo, quello con più contrasto.
+
+`dorso_stile` accetta `normale`, `grassetto`, `corsivo` o `mono`, con i font del sito: senza il campo vale `grassetto`. `dorso_lettura` accetta `ascendente`, dal basso verso l'alto come nelle edizioni italiane, oppure `discendente`, dall'alto verso il basso come nelle edizioni inglesi. Senza il campo il sito italiano usa `ascendente` e quello inglese `discendente`.
+
+Tutti i campi del dorso hanno la versione `_en` per l'edizione inglese.
+
+### Link ad Amazon
+
+`isbn` e `isbn_en` accettano 10 o 13 cifre, con o senza trattini. Il build controlla la cifra finale, che rileva ogni errore di battitura su una singola cifra: un ISBN sbagliato blocca la pubblicazione.
+
+Dall'ISBN il build crea il link: amazon.it per `isbn`, amazon.com per `isbn_en`. Per i libri stampati il codice Amazon coincide con l'ISBN a 10 cifre, quindi il link si crea dagli ISBN a 10 cifre e da quelli a 13 che iniziano con 978. Per un ISBN che inizia con 979 il build ti avvisa: scrivi il link a mano in `amazon` o `amazon_en`.
+
+Un link scritto a mano vince sempre sull'ISBN e deve iniziare con `https://`. Se c'è `copertina_en` ma manca il link inglese, il build ti avvisa e il sito inglese usa il link italiano.
+
+## Disporre la libreria
+
+`content/libreria.md` decide come stanno i libri sulle mensole: ordine, vista e decorazioni. Ogni riga `--- mensola ---` apre una mensola nuova, come `--- parte ---` nei progressi.
+
+```markdown
+--- mensola ---
+rework
+scrum
+la-mucca-viola: copertina
+greenlights: disteso
+lunica-regola: disteso
+decorazione: vaso.webp, 60%
+colloqui-con-se-stesso
+
+--- mensola ---
+decorazione: busto.webp, 85%
+larte-della-guerra
+padre-ricco-padre-povero
+```
+
+Una riga con il nome di un libro lo mette sulla mensola con il dorso dritto. Dopo i due punti puoi scrivere `copertina`, per mostrarlo di fronte, oppure `disteso`, per sdraiarlo. Più libri distesi di fila formano una pila e il primo che scrivi sta in cima.
+
+`decorazione: vaso.webp, 60%` mette tra i libri un'immagine di `images/decorazioni/`, alta il 60% della mensola. Le regole per preparare le immagini sono in `images/decorazioni/LEGGIMI.md`.
+
+Le righe che iniziano con `#` sono commenti. Un libro che non compare nel file finisce in fondo all'ultima mensola con il dorso dritto, e il build te lo segnala. Senza il file tutti i libri stanno su una mensola, in ordine di nome file.
+
+Il build si ferma se un nome non corrisponde a nessun libro, se un libro compare due volte, se un'opzione è sconosciuta, se un separatore è scritto male o se manca l'immagine di una decorazione. Il messaggio indica la riga del file.
 
 ## Cambiare la foto profilo
 
@@ -154,7 +221,7 @@ La foto della sezione "Chi sono" sta in `images/profilo/`, il nome del file è l
 
 ## Immagini
 
-Progetti in `images/projects/` (webp, larghezza 880 px). Copertine in `images/books/` (webp, larghezza 440 px). Foto del profilo in `images/profilo/`. Se il markdown punta a un'immagine che non esiste, il build fallisce e te lo dice.
+Progetti in `images/projects/` (webp, larghezza 880 px). Copertine in `images/books/` (webp, larghezza 440 px). Foto del profilo in `images/profilo/`. Decorazioni della libreria in `images/decorazioni/`, in webp o png con sfondo trasparente: le regole sono nel `LEGGIMI.md` della cartella, e `tools/ottimizza-immagini.py` non elabora questa cartella, quindi non tocca la trasparenza. Se il markdown punta a un'immagine che non esiste, il build fallisce e te lo dice.
 
 Accanto a ogni immagine c'è una versione ridotta con il suffisso della larghezza, per esempio `spotify-480.webp`: il sito le propone al browser con `srcset`, così su telefono viene scaricata solo la misura che serve. Quando aggiungi o sostituisci un'immagine, rigenera le versioni ridotte:
 
@@ -186,4 +253,4 @@ Poi apri http://localhost:8000. Serve solo Python 3, nessuna dipendenza.
 
 ## Struttura
 
-`content/` i contenuti in markdown (progetti, progressi, libri) e i testi dell'interfaccia in `content/testi/`. `templates/index.html` la struttura della pagina, unica per entrambe le lingue. `build.py` il generatore (solo libreria standard). `styles.css` e `main.js` stile e comportamenti; il CSS viene compresso e incorporato nella pagina dal build, così il browser non deve scaricare un secondo file prima di disegnare; il sorgente resta commentato, si riduce solo quello che viene spedito. `tools/` gli script di manutenzione. `fonts/` iA Writer Quattro S e Mono S più Parisienne ridotto alle lettere del monogramma M.B., tutti self-hosted con licenza SIL OFL. `images/` le immagini ottimizzate, con `images/profilo/` per la foto. `jet_converter/` tool indipendente, pubblicato così com'è. `_site/` output generato, non si committa.
+`content/` i contenuti in markdown (progetti, progressi, libri), la disposizione delle mensole in `content/libreria.md` e i testi dell'interfaccia in `content/testi/`. `templates/index.html` la struttura della pagina, unica per entrambe le lingue. `build.py` il generatore (solo libreria standard). `styles.css` e `main.js` stile e comportamenti; il CSS viene compresso e incorporato nella pagina dal build, così il browser non deve scaricare un secondo file prima di disegnare; il sorgente resta commentato, si riduce solo quello che viene spedito. `tools/` gli script di manutenzione. `fonts/` iA Writer Quattro S e Mono S più Parisienne ridotto alle lettere del monogramma M.B., tutti self-hosted con licenza SIL OFL. `images/` le immagini ottimizzate, con `images/profilo/` per la foto e `images/decorazioni/` per gli oggetti della libreria. `jet_converter/` tool indipendente, pubblicato così com'è. `_site/` output generato, non si committa.

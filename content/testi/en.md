@@ -80,7 +80,7 @@ letture_intro: A selection of the reads that inspired me.
 libri_mostra_tutti: Show all books
 libri_mostra_meno: Show less
 libri_copertina: Cover of
-libri_voto: Rated %d out of 5
+libri_voto: Rated %s out of 5
 
 contatti_titolo: Let's talk
 contatti_intro: Write to me or book a call. I am open to new opportunities and collaborations.

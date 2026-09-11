@@ -80,7 +80,7 @@ letture_intro: Una selezione delle letture che mi hanno ispirato.
 libri_mostra_tutti: Mostra tutti i libri
 libri_mostra_meno: Mostra meno
 libri_copertina: Copertina di
-libri_voto: Valutazione %d su 5
+libri_voto: Valutazione %s su 5
 
 contatti_titolo: Parliamone
 contatti_intro: Scrivimi o prenota una call. Sono aperto a nuove opportunità e collaborazioni.

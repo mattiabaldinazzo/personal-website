@@ -14,3 +14,6 @@ Thumbs.db
 node_modules/
 dist/
 *.log
+
+# Documentazione completa del progetto: resta sul computer, non va su GitHub
+DOCUMENTAZIONE.md
