@@ -81,6 +81,7 @@ libri_mostra_altro: Mostra altro
 libri_mostra_meno: Mostra meno
 libri_aggiunti: Libri aggiunti: %s
 libri_copertina: Copertina di
+libri_amazon: Vedi su Amazon
 libri_voto: Valutazione %s su 5
 
 contatti_titolo: Parliamone

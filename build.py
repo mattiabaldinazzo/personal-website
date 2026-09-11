@@ -77,6 +77,12 @@ CATEGORIE_NOTE = ["personali", "lavorativi", "universitari"]
 ERRORI = []
 AVVISI = []
 
+# Icona della X nelle modali, uguale per progetti e libri
+ICONA_CHIUDI = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+                'stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>')
+# Copertina nella scheda del libro: 140px nel pannello dal basso, 180px nella finestra centrata
+SIZES_SCHEDA_LIBRO = "(min-width: 680px) 180px, 140px"
+
 SIZES_LAVORI = "(min-width: 920px) 240px, (min-width: 600px) 370px, 92vw"
 SIZES_FOTO = "(min-width: 860px) 244px, (min-width: 600px) 260px, 62vw"
 
@@ -1065,7 +1071,7 @@ def render_modali(progetti, lingua, T):
             '      <header class="modal-head">\n'
             '        <h2 id="modal-%(slug)s-title">%(titolo)s</h2>\n'
             '        <button class="modal-close" type="button" data-close aria-label="%(chiudi)s">\n'
-            '          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>\n'
+            '          %(icona)s\n'
             '        </button>\n'
             '      </header>\n'
             '      <div class="modal-body">\n%(corpo)s\n      </div>\n'
@@ -1073,6 +1079,7 @@ def render_modali(progetti, lingua, T):
             '  </div>' % {"slug": esc(p["slug"]),
                           "titolo": esc(campo(p["meta"], "titolo", lingua)),
                           "chiudi": esc(T["modale_chiudi"]),
+                          "icona": ICONA_CHIUDI,
                           "corpo": corpo_html}
         )
     return "\n\n  ".join(modali)
@@ -1188,15 +1195,22 @@ def descrizione_libro(libro, lingua, T):
     return "%s, %s. %s" % (ed["titolo"], ed["autore"], testo_voto(T, libro["voto"], lingua))
 
 
+def apri_scheda(libro, lingua, T, contenuto):
+    """Bottone che apre la scheda del libro: il dorso o la copertina sono il
+    contenuto visibile, titolo, autore e voto il nome letto dai lettori di schermo."""
+    return ('<button class="libro-apri" type="button" data-modal="libro-%s" aria-haspopup="dialog">'
+            '%s<span class="visually-hidden">%s</span></button>'
+            % (esc(libro["slug"]), contenuto, esc(descrizione_libro(libro, lingua, T))))
+
+
 def render_dorso(libro, lingua, T, classe, w, h, fs, extra_stile=""):
     ed = libro["edizioni"][lingua]
-    return ('<li class="libro %s" style="--w:%d;--h:%d;--fs:%d;--colore:%s;--testo:%s%s">'
-            '<span class="libro-dorso libro-dorso--%s libro-dorso--%s" aria-hidden="true">'
-            '<span class="libro-titolo">%s</span></span>'
-            '<span class="visually-hidden">%s</span></li>'
+    dorso = ('<span class="libro-dorso libro-dorso--%s libro-dorso--%s" aria-hidden="true">'
+             '<span class="libro-titolo">%s</span></span>'
+             % (ed["dorso_stile"], ed["dorso_lettura"], esc(ed["dorso_titolo"])))
+    return ('<li class="libro %s" style="--w:%d;--h:%d;--fs:%d;--colore:%s;--testo:%s%s">%s</li>'
             % (classe, w, h, fs, ed["dorso_colore"], ed["dorso_testo"], extra_stile,
-               ed["dorso_stile"], ed["dorso_lettura"], esc(ed["dorso_titolo"]),
-               esc(descrizione_libro(libro, lingua, T))))
+               apri_scheda(libro, lingua, T, dorso)))
 
 
 def render_elemento_libreria(el, per_nome, lingua, T):
@@ -1212,12 +1226,54 @@ def render_elemento_libreria(el, per_nome, lingua, T):
         libro = per_nome[el["slug"]]
         immagine = tag_immagine(libro["edizioni"][lingua]["copertina"], "", "%dpx" % el["w"],
                                 'loading="lazy" decoding="async"')
-        return ('<li class="libro libro--copertina" style="--w:%d;--h:%d">%s'
-                '<span class="visually-hidden">%s</span></li>'
-                % (el["w"], el["h"], immagine, esc(descrizione_libro(libro, lingua, T))))
+        return ('<li class="libro libro--copertina" style="--w:%d;--h:%d">%s</li>'
+                % (el["w"], el["h"], apri_scheda(libro, lingua, T, immagine)))
     immagine = tag_immagine(el["immagine"], "", "", 'loading="lazy" decoding="async"')
     return ('<li class="decorazione" aria-hidden="true" style="--w:%d;--h:%d">%s</li>'
             % (el["w"], el["h"], immagine))
+
+
+def render_modali_libri(libri, lingua, T):
+    """Una scheda per ogni libro, aperta dal clic sul dorso o sulla copertina.
+    Stessa struttura delle schede dei progetti, cosi' riusa stili, focus e
+    chiusura di main.js. data-hash e' l'indirizzo #libro-<nome>: il tasto
+    indietro chiude la scheda e il link si puo' condividere."""
+    schede = []
+    for b in libri:
+        ed = b["edizioni"][lingua]
+        copertina = tag_immagine(ed["copertina"], "%s %s" % (T["libri_copertina"], ed["titolo"]),
+                                 SIZES_SCHEDA_LIBRO, 'loading="lazy" decoding="async"')
+        nota = ('\n          <p class="libro-scheda-nota">%s</p>' % inline_md(b["nota"][lingua])
+                if b["nota"][lingua] else "")
+        link = ('\n          <p class="modal-cta"><a class="btn btn-primary" href="%s" target="_blank" '
+                'rel="noopener">%s</a></p>' % (esc(ed["link"]), esc(T["libri_amazon"]))
+                if ed["link"] else "")
+        schede.append(
+            '<div class="modal modal--libro" id="modal-libro-%(slug)s" data-hash="libro-%(slug)s" hidden>\n'
+            '    <div class="modal-backdrop" data-close></div>\n'
+            '    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-libro-%(slug)s-title">\n'
+            '      <header class="modal-head">\n'
+            '        <h2 id="modal-libro-%(slug)s-title">%(titolo)s</h2>\n'
+            '        <button class="modal-close" type="button" data-close aria-label="%(chiudi)s">\n'
+            '          %(icona)s\n'
+            '        </button>\n'
+            '      </header>\n'
+            '      <div class="modal-body libro-scheda">\n'
+            '        <div class="libro-scheda-copertina">%(copertina)s</div>\n'
+            '        <div class="libro-scheda-info">\n'
+            '          <p class="libro-scheda-autore">%(autore)s</p>\n'
+            '          <p class="libro-scheda-voto"><span class="stelle" style="--voto:%(voto_css)s" aria-hidden="true"></span>'
+            '<span class="libro-scheda-numero" aria-hidden="true">%(voto)s</span>'
+            '<span class="visually-hidden">%(voto_testo)s</span></p>%(nota)s%(link)s\n'
+            '        </div>\n'
+            '      </div>\n'
+            '    </div>\n'
+            '  </div>' % {"slug": esc(b["slug"]), "titolo": esc(ed["titolo"]), "autore": esc(ed["autore"]),
+                          "chiudi": esc(T["modale_chiudi"]), "icona": ICONA_CHIUDI, "copertina": copertina,
+                          "voto_css": "%g" % b["voto"], "voto": formatta_voto(b["voto"], lingua),
+                          "voto_testo": esc(testo_voto(T, b["voto"], lingua)), "nota": nota, "link": link}
+        )
+    return "\n\n  ".join(schede)
 
 
 def render_libreria(misurate, libri, lingua, T):
@@ -1388,7 +1444,8 @@ def costruisci_pagina(modello, lingua, sottocartella, testi, progetti, libri, li
         "WORKS": render_progetti(progetti, lingua, T),
         "WORKS_MORE": render_toggle_progetti(progetti, T),
         "ANNO": str(datetime.date.today().year),
-        "MODALS": render_modali(progetti, lingua, T),
+        "MODALS": "\n\n  ".join(m for m in (render_modali(progetti, lingua, T),
+                                             render_modali_libri(libri, lingua, T)) if m),
         "PROGRESS": render_progressi(progressi, lingua, T),
         "PROGRESS_MORE": render_toggle_progressi(progressi, T),
         "BOOKS": render_libreria(libreria, libri, lingua, T),

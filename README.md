@@ -155,7 +155,7 @@ Optional one or two line note, shown under the author.
 
 `titolo`, `autore`, `voto` e `copertina` sono obbligatori, tutti gli altri campi sono facoltativi.
 
-La sezione Letture mostra i libri su una libreria in legno, disposti come scrivi in `content/libreria.md`. Sulla mensola si vedono dorsi, copertine e decorazioni. Titolo, autore e voto sono nel testo per i lettori di schermo; link e nota non sono ancora mostrati.
+La sezione Letture mostra i libri su una libreria in legno, disposti come scrivi in `content/libreria.md`. Un clic su un dorso o su una copertina apre la scheda del libro, descritta più sotto.
 
 ### Due edizioni, italiana e inglese
 
@@ -167,7 +167,7 @@ Se un libro esiste solo in inglese, scrivi i dati inglesi nei campi senza `_en`:
 
 ### Voto
 
-`voto` va da 0 a 5 a mezzi punti. Puoi scriverlo con il punto o con la virgola: `4`, `4.5`, `4,5`. Un valore come `4.3` blocca il build. Il testo per i lettori di schermo riporta il voto esatto, per esempio "Valutazione 4,5 su 5".
+`voto` va da 0 a 5 a mezzi punti. Puoi scriverlo con il punto o con la virgola: `4`, `4.5`, `4,5`. Un valore come `4.3` blocca il build. Nella scheda il voto compare con le stelle, riempite fino alla mezza stella, e con il numero accanto. Il testo per i lettori di schermo riporta il voto esatto, per esempio "Valutazione 4,5 su 5".
 
 ### Dorso
 
@@ -186,6 +186,14 @@ Tutti i campi del dorso hanno la versione `_en` per l'edizione inglese.
 Dall'ISBN il build crea il link: amazon.it per `isbn`, amazon.com per `isbn_en`. Per i libri stampati il codice Amazon coincide con l'ISBN a 10 cifre, quindi il link si crea dagli ISBN a 10 cifre e da quelli a 13 che iniziano con 978. Per un ISBN che inizia con 979 il build ti avvisa: scrivi il link a mano in `amazon` o `amazon_en`.
 
 Un link scritto a mano vince sempre sull'ISBN e deve iniziare con `https://`. Se c'è `copertina_en` ma manca il link inglese, il build ti avvisa e il sito inglese usa il link italiano.
+
+### Scheda del libro
+
+Ogni libro sulla mensola è un bottone. Il clic apre una scheda con copertina, titolo, autore, stelle, nota e il bottone "Vedi su Amazon". Il bottone compare solo se il libro ha un link, da `amazon` o da `isbn`; il testo del bottone è `libri_amazon` in `content/testi/`. Nel sito inglese la scheda usa titolo, autore, copertina e link dell'edizione inglese, secondo la regola dei campi `_en`.
+
+Su telefono la scheda sale dal basso, da 680 px in su si apre al centro, come le schede dei progetti. Si chiude con la X, con Esc, con un clic fuori o con il tasto indietro del browser.
+
+Aprendo la scheda l'indirizzo diventa `#libro-` più il nome del file, per esempio `mattiabaldinazzo.it/#libro-rework`. Quel link apre direttamente la scheda, con la libreria dietro: puoi mandarlo a qualcuno o metterlo in un post.
 
 ## Disporre la libreria
 

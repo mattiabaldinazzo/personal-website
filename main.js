@@ -261,15 +261,34 @@
   function focusables(modal) {
     return modal.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])');
   }
-  function openModal(modal) {
+  /* Le schede dei libri hanno data-hash: aprendole l'indirizzo diventa
+     #libro-<nome>, cosi' il tasto indietro le chiude e il link si puo'
+     condividere. daIndirizzo e' vero quando apertura o chiusura arrivano
+     dall'indirizzo stesso, per non scrivere la cronologia due volte. */
+  function openModal(modal, daIndirizzo) {
     lastFocused = doc.activeElement;
     modal.hidden = false;
     doc.body.classList.add('modal-open');
+    var hash = modal.getAttribute('data-hash');
+    if (hash && !daIndirizzo && location.hash !== '#' + hash) {
+      history.pushState({ scheda: hash }, '', '#' + hash);
+    }
     var closeBtn = modal.querySelector('.modal-close');
     var f = focusables(modal);
     (closeBtn || f[0] || modal).focus();
   }
-  function closeModal(modal) {
+  function closeModal(modal, daIndirizzo) {
+    var hash = modal.getAttribute('data-hash');
+    if (hash && !daIndirizzo && location.hash === '#' + hash) {
+      if (history.state && history.state.scheda === hash) {
+        // la scheda ha aggiunto una voce alla cronologia: tornare indietro la
+        // toglie, e l'evento popstate chiude la scheda
+        history.back();
+        return;
+      }
+      // aperta da un link diretto: si toglie l'indirizzo senza cambiare pagina
+      history.replaceState(null, '', location.pathname + location.search);
+    }
     modal.hidden = true;
     doc.body.classList.remove('modal-open');
     if (lastFocused && typeof lastFocused.focus === 'function') { lastFocused.focus(); }
@@ -306,6 +325,26 @@
       else if (!e.shiftKey && doc.activeElement === last) { e.preventDefault(); first.focus(); }
     }
   });
+
+  /* ---- Deep link: #libro-<nome> apre la scheda del libro ---- */
+  function schedaDaIndirizzo() {
+    if (location.hash.indexOf('#libro-') !== 0) { return null; }
+    return doc.getElementById('modal-' + location.hash.slice(1));
+  }
+  window.addEventListener('popstate', function () {
+    var aperta = doc.querySelector('.modal:not([hidden])');
+    var hashAperta = aperta ? aperta.getAttribute('data-hash') : null;
+    if (hashAperta && location.hash !== '#' + hashAperta) { closeModal(aperta, true); }
+    var daAprire = schedaDaIndirizzo();
+    if (daAprire && daAprire.hidden) { openModal(daAprire, true); }
+  });
+  var schedaIniziale = schedaDaIndirizzo();
+  if (schedaIniziale) {
+    // dietro la scheda porta la libreria: chiudendola ci si ritrova li'
+    var libreriaDietro = doc.querySelector('[data-libreria]');
+    if (libreriaDietro) { libreriaDietro.scrollIntoView({ block: 'start', behavior: 'instant' }); }
+    openModal(schedaIniziale, true);
+  }
 
   /* ---- Deep link: #progetto-<slug> apre la modale corrispondente ---- */
   if (location.hash.indexOf('#progetto-') === 0) {

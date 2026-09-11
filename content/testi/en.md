@@ -81,6 +81,7 @@ libri_mostra_altro: Show more
 libri_mostra_meno: Show less
 libri_aggiunti: Books added: %s
 libri_copertina: Cover of
+libri_amazon: View on Amazon
 libri_voto: Rated %s out of 5
 
 contatti_titolo: Let's talk
