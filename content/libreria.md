@@ -5,8 +5,8 @@
 # mette il libro sulla mensola con il dorso dritto.
 #
 # Opzioni dopo i due punti:
-#   la-mucca-viola: copertina       libro di fronte
-#   greenlights: disteso            libro sdraiato, più distesi di fila fanno una pila
+#   greenlights: copertina          libro di fronte
+#   rework: disteso                 libro sdraiato, più distesi di fila fanno una pila
 #   decorazione: vaso.webp, 60%     immagine da images/decorazioni, alta il 60% della mensola
 #
 # Le righe che iniziano con # sono commenti.
@@ -15,9 +15,14 @@
 --- mensola ---
 colloqui-con-se-stesso
 lunica-regola
+larte-della-guerra
+greenlights: copertina
+decorazione: statua.webp, 90%
+
+--- mensola ---
+decorazione: mappamondo.webp, 90%
 padre-ricco-padre-povero
 la-mucca-viola
-larte-della-guerra
 rework
-greenlights
 scrum
+decorazione: vaso.webp, 70%

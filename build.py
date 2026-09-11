@@ -133,6 +133,9 @@ MARGINE_OGGETTO = 8           # per lato, attorno a copertine, pile e decorazion
 # restano comunque larghi o alti almeno LARGHEZZA_TOCCO, cosi' si toccano bene.
 SCALA_MOBILE = 0.8
 LARGHEZZA_TOCCO = 24
+# Larghezza utile della mensola su un telefono stretto (iPhone SE, 375px):
+# serve solo al controllo di capienza, il CSS manda a capo da solo.
+LARGHEZZA_MENSOLA_MOBILE = 291
 # Titolo sul dorso. iA Writer Quattro ha solo quattro larghezze di carattere e
 # nessuna crenatura, quindi la lunghezza di un titolo e' la somma esatta delle
 # larghezze, lette dai file dei font. I caratteri non elencati sono larghi
@@ -1181,8 +1184,25 @@ def misura_libreria(mensole, libri):
         if occupato > LARGHEZZA_MENSOLA:
             avviso("libreria.md: la mensola %d e' piena al %d%%, su schermo largo va a capo su piu' righe"
                    % (numero, round(occupato * 100 / LARGHEZZA_MENSOLA)))
+        elif occupato_mobile(elementi) > LARGHEZZA_MENSOLA_MOBILE:
+            avviso("libreria.md: la mensola %d ci sta su schermo largo ma non su un telefono stretto "
+                   "(%d%%), li' va a capo su due righe"
+                   % (numero, round(occupato_mobile(elementi) * 100 / LARGHEZZA_MENSOLA_MOBILE)))
         misurate.append(elementi)
     return misurate
+
+
+def occupato_mobile(elementi):
+    """Spazio che la mensola occupa su un telefono: tutto si riduce di
+    SCALA_MOBILE, ma un dorso resta largo almeno LARGHEZZA_TOCCO."""
+    totale = 0
+    for e in elementi:
+        if e["tipo"] == "dorso":
+            largo = max(LARGHEZZA_TOCCO, e["w"] * SCALA_MOBILE)
+        else:
+            largo = e["w"] * SCALA_MOBILE
+        totale += largo + 2 * e["margine"]
+    return totale
 
 
 def misura_pila(pila, per_nome, numero):

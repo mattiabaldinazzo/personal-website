@@ -44,11 +44,11 @@ REGOLE = {
 }
 
 # Decorazioni della libreria: sulla mensola conta quanto sono alte, quindi il
-# limite e' sull'altezza. 440px bastano per la mensola piu' alta sugli schermi
-# ad alta densita'.
+# limite e' sull'altezza. Una decorazione alta quanto la mensola misura 224px,
+# che su uno schermo a tripla densita' diventano 672 pixel veri.
 DECORAZIONI = "images/decorazioni"
-ALTEZZA_DECORAZIONI = 440
-QUALITA_DECORAZIONI = 86
+ALTEZZA_DECORAZIONI = 680
+QUALITA_DECORAZIONI = 92
 # Pixel con opacita' fino a questa soglia contano come vuoti quando si tagliano
 # i bordi: gli oggetti scontornati hanno spesso un alone quasi invisibile.
 SOGLIA_TRASPARENZA = 8

@@ -7,7 +7,7 @@ Formato png o webp con sfondo trasparente. Un jpg ha sempre lo sfondo pieno: il 
 Il bordo inferiore dell'immagine è la base che poggia sulla mensola: anche pochi pixel vuoti sotto l'oggetto lo fanno sembrare sospeso.
 Nome del file con lettere, numeri, trattini e punti, senza spazi. Se il nome in `content/libreria.md` non corrisponde a un file di questa cartella, il build fallisce e ti dice quale.
 
-Dopo aver aggiunto un'immagine lancia `python3 tools/ottimizza-immagini.py`. Lo script taglia i bordi trasparenti attorno all'oggetto, porta l'altezza a 440 px se è più alta e salva in webp conservando la trasparenza. Se il file era un png, il nome diventa .webp: lo script te lo scrive e in `content/libreria.md` usi il nome nuovo. Lanciarlo più volte non cambia più nulla.
+Dopo aver aggiunto un'immagine lancia `python3 tools/ottimizza-immagini.py`. Lo script taglia i bordi trasparenti attorno all'oggetto, porta l'altezza a 680 px se è più alta e salva in webp conservando la trasparenza. Se il file era un png, il nome diventa .webp: lo script te lo scrive e in `content/libreria.md` usi il nome nuovo. Lanciarlo più volte non cambia più nulla.
 
 Per scontornare una foto con iPhone apri l'app Foto, tieni premuto sull'oggetto e scegli Condividi: ottieni un png con lo sfondo trasparente. Dal Mac fai clic destro sulla foto nel Finder, poi Azioni rapide e Rimuovi sfondo. Fotografa l'oggetto intero, di fronte, all'altezza del suo centro e senza ombra sotto.
 

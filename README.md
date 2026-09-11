@@ -231,7 +231,7 @@ Il build si ferma se un nome non corrisponde a nessun libro, se un libro compare
 
 All'apertura si vedono 3 righe della libreria. "Mostra altro" ne aggiunge 3 a ogni clic. "Mostra meno" compare dal primo clic, torna subito alle prime 3 righe e riporta in vista l'inizio della libreria. Con 3 righe o meno i bottoni non compaiono. Le soglie sono le costanti `RIGHE_VISIBILI` e `RIGHE_PER_CLIC` in `build.py`.
 
-Su schermo largo una riga è una mensola. Una mensola larga 776 px contiene circa 27 dorsi da 300 pagine. Se scrivi più elementi di quanti ne entrano, la mensola va a capo su una riga in più e il build ti avvisa con la percentuale di riempimento. Una pila più alta della mensola viene divisa in pile vicine, sempre con un avviso. Su schermi più stretti le mensole vanno a capo da sole e le righe si contano di nuovo quando cambia la larghezza, per esempio ruotando il telefono. Senza JavaScript si vede tutta la libreria.
+Su schermo largo una riga è una mensola. Una mensola larga 776 px contiene circa 27 dorsi da 300 pagine. Se scrivi più elementi di quanti ne entrano, la mensola va a capo su una riga in più e il build ti avvisa con la percentuale di riempimento. Il controllo si ripete per un telefono stretto da 375 px (`LARGHEZZA_MENSOLA_MOBILE`): se una mensola ci sta su schermo largo ma non sul telefono, il build te lo dice, così sai quando andrà a capo lì. Una pila più alta della mensola viene divisa in pile vicine, sempre con un avviso. Su schermi più stretti le mensole vanno a capo da sole e le righe si contano di nuovo quando cambia la larghezza, per esempio ruotando il telefono. Senza JavaScript si vede tutta la libreria.
 
 ### Telefono
 
@@ -261,7 +261,7 @@ Copia il file in `images/decorazioni/` con un nome senza spazi, per esempio `vas
 python3 tools/ottimizza-immagini.py
 ```
 
-Lo script taglia i bordi trasparenti attorno all'oggetto, porta l'altezza a 440 px e salva in webp conservando la trasparenza. Il png viene sostituito dal webp e lo script ti scrive il nome da usare, per esempio `in content/libreria.md scrivi vaso.webp`. Se compare `No module named 'PIL'`, lancia prima `pip install pillow`.
+Lo script taglia i bordi trasparenti attorno all'oggetto, porta l'altezza a 680 px e salva in webp conservando la trasparenza. Il png viene sostituito dal webp e lo script ti scrive il nome da usare, per esempio `in content/libreria.md scrivi vaso.webp`. Se compare `No module named 'PIL'`, lancia prima `pip install pillow`.
 
 ### 4. Mettila sulla mensola
 
@@ -283,6 +283,8 @@ decorazione: vaso.webp, 55%
 
 Questa mensola usa gli 8 libri del sito, una copertina esposta, una pila da tre e due decorazioni, ed è piena intorno al 90%. Il valore esatto dipende dalla forma delle decorazioni: a parità di altezza, un oggetto più largo occupa più spazio. Con gli stessi 8 libri tutti di dorso la mensola sarebbe piena per un terzo.
 
+Un libro disteso occupa in larghezza quanto è alto, quindi una pila di tre libri è più larga di tre dorsi in piedi: le pile servono a variare l'aspetto, non a guadagnare spazio.
+
 Per l'altezza parti da questi valori. Un libro standard occupa circa l'87% dello spazio e un tascabile il 77%. Un vaso piccolo sta bene tra il 45 e il 55%, una pianta tra il 55 e il 70%, un globo tra il 60 e il 75%, un busto o una statua tra l'80 e il 95%, una lampada tra il 90 e il 100%.
 
 ### 5. Controlla e pubblica
@@ -292,7 +294,7 @@ python3 build.py
 python3 -m http.server 8000 --directory _site
 ```
 
-Se il build scrive che la mensola è piena oltre il 100%, su schermo largo la mensola va a capo su una riga in più. Togli un elemento, oppure abbassa la decorazione: si stringe in proporzione. Quando il risultato ti piace, aggiungi al commit i file per nome:
+Se il build scrive che la mensola è piena oltre il 100%, su schermo largo la mensola va a capo su una riga in più. Togli un elemento, oppure abbassa la decorazione: si stringe in proporzione. Un avviso può segnalare che la mensola sta su schermo largo ma non su un telefono stretto: lì va a capo lo stesso, e per evitarlo sposta un elemento sulla mensola successiva. Quando il risultato ti piace, aggiungi al commit i file per nome:
 
 ```bash
 git add images/decorazioni/vaso.webp content/libreria.md
@@ -307,7 +309,7 @@ La foto della sezione "Chi sono" sta in `images/profilo/`, il nome del file è l
 
 ## Immagini
 
-Progetti in `images/projects/` (webp, larghezza 880 px). Copertine in `images/books/` (webp, larghezza 440 px). Foto del profilo in `images/profilo/`. Decorazioni della libreria in `images/decorazioni/`, in webp o png con sfondo trasparente: le regole sono nel `LEGGIMI.md` della cartella. `tools/ottimizza-immagini.py` taglia i bordi trasparenti attorno all'oggetto, limita l'altezza a 440 px e converte in webp conservando la trasparenza; se il nome cambia, per esempio da `vaso.png` a `vaso.webp`, te lo scrive e va aggiornato in `content/libreria.md`. Se il markdown punta a un'immagine che non esiste, il build fallisce e te lo dice.
+Progetti in `images/projects/` (webp, larghezza 880 px). Copertine in `images/books/` (webp, larghezza 440 px). Foto del profilo in `images/profilo/`. Decorazioni della libreria in `images/decorazioni/`, in webp o png con sfondo trasparente: le regole sono nel `LEGGIMI.md` della cartella. `tools/ottimizza-immagini.py` taglia i bordi trasparenti attorno all'oggetto, limita l'altezza a 680 px e converte in webp conservando la trasparenza; se il nome cambia, per esempio da `vaso.png` a `vaso.webp`, te lo scrive e va aggiornato in `content/libreria.md`. Se il markdown punta a un'immagine che non esiste, il build fallisce e te lo dice.
 
 Accanto a ogni immagine c'è una versione ridotta con il suffisso della larghezza, per esempio `spotify-480.webp`: il sito le propone al browser con `srcset`, così su telefono viene scaricata solo la misura che serve. Quando aggiungi o sostituisci un'immagine, rigenera le versioni ridotte:
 
