@@ -334,8 +334,16 @@ h1, h2, h3 {
 .menu-open .menu-bars::before { transform: translateY(6px) rotate(45deg); }
 .menu-open .menu-bars::after { transform: translateY(-6px) rotate(-45deg); }
 
-/* Pannello menu mobile */
+/* Pannello menu mobile.
+   Si apre sopra la pagina, senza spingerla in basso. Se stesse nel flusso,
+   un link del menu calcolerebbe la destinazione con il pannello aperto; poi
+   il pannello si chiude, la pagina sale della sua altezza e si arriva oltre
+   l'inizio della sezione. */
 .mobile-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
   overflow: hidden;
   max-height: 0;
   visibility: hidden;
@@ -348,6 +356,7 @@ h1, h2, h3 {
   max-height: 80vh;
   visibility: visible;
   border-bottom-color: var(--line);
+  box-shadow: 0 18px 24px -20px rgba(28, 27, 24, 0.35);
 }
 .mobile-menu nav { display: flex; flex-direction: column; padding: 0 var(--pad); }
 .mobile-menu nav a {
