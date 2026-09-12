@@ -494,7 +494,11 @@ h1, h2, h3 {
   padding-block: var(--section-y);
   border-top: 1px solid var(--line);
 }
-section[id] { scroll-margin-top: calc(var(--header-h) + 16px); }
+/* Arrivo da un link del menu. Ogni sezione ha gia' il suo spazio in alto
+   (--section-y), quindi qui si sottrae: senza, si sommerebbe all'altezza
+   dell'header e il titolo finirebbe molto piu' in basso del bordo. Il
+   risultato non scende sotto zero, dove la sezione tocca il bordo alto. */
+section[id] { scroll-margin-top: max(0px, calc(var(--header-h) + 24px - var(--section-y))); }
 
 .section-head {
   max-width: var(--measure);
