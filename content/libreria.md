@@ -13,6 +13,7 @@
 # I libri che non compaiono qui finiscono in fondo all'ultima mensola.
 
 --- mensola ---
+decorazione: stemma.webp, 78%
 colloqui-con-se-stesso
 lunica-regola
 larte-della-guerra
