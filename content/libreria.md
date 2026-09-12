@@ -18,12 +18,14 @@ colloqui-con-se-stesso
 lunica-regola
 larte-della-guerra
 greenlights: copertina
+il-piu-grande-venditore-del-mondo
+la-mucca-viola
 decorazione: statua.webp, 90%
 
 --- mensola ---
 decorazione: mappamondo.webp, 90%
 padre-ricco-padre-povero
-la-mucca-viola
 rework
 scrum
+tecniche-di-resistenza-interiore: copertina
 decorazione: vaso.webp, 70%
