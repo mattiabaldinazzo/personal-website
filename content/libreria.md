@@ -18,14 +18,24 @@ colloqui-con-se-stesso
 lunica-regola
 larte-della-guerra
 greenlights: copertina
+homo-deus
 il-piu-grande-venditore-del-mondo
 la-mucca-viola
 decorazione: statua.webp, 90%
-
---- mensola ---
-decorazione: mappamondo.webp, 90%
 padre-ricco-padre-povero
 rework
 scrum
+arricchirsi-con-onore
 tecniche-di-resistenza-interiore: copertina
+decorazione: mappamondo.webp, 90%
+the-lean-startup: disteso
+il-mio-primo-milione-di-dollari: disteso
+21-giorni-per-una-grande-idea
+come-trattare-gli-altri-e-farseli-amici
+anything-you-want
+decorazione: nave.webp, 74%
+--- mensola ---
+arrampicare
+nel-legno-e-nella-pietra
+gentiluomo-in-mare
 decorazione: vaso.webp, 70%
