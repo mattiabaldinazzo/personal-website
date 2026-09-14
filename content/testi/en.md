@@ -60,7 +60,7 @@ categoria_lavorativi: Professional
 categoria_universitari: University
 lavori_apri: Open project
 lavori_dettaglio: Read more
-lavori_mostra_tutti: Show all projects
+lavori_mostra_altro: Show more
 lavori_mostra_meno: Show less
 lavori_vuoto: No projects in this category yet.
 modale_chiudi: Close

@@ -81,10 +81,17 @@
   var filterBtns = doc.querySelectorAll('[data-filter]');
   var works = doc.querySelectorAll('[data-works] .work');
   var emptyMsg = doc.querySelector('[data-works-empty]');
-  var worksToggle = doc.querySelector('[data-works-toggle]');
-  var limite = worksToggle ? parseInt(worksToggle.getAttribute('data-limite'), 10) : 0;
+  var worksAzioni = doc.querySelector('[data-works-azioni]');
+  var worksAltro = worksAzioni && worksAzioni.querySelector('[data-works-altro]');
+  var worksMeno = worksAzioni && worksAzioni.querySelector('[data-works-meno]');
+  var schermoLargo = window.matchMedia('(min-width: 920px)');
+  var passoLavori = function () {
+    if (!worksAzioni) { return 0; }
+    var attr = schermoLargo.matches ? 'data-passo' : 'data-passo-mobile';
+    return parseInt(worksAzioni.getAttribute(attr), 10) || 0;
+  };
   var categoria = 'tutti';
-  var espanso = false;
+  var mostrati = passoLavori();
 
   function aggiornaProgetti() {
     var visibili = [];
@@ -93,16 +100,15 @@
       if (match) { visibili.push(w); }
       w.classList.toggle('is-hidden', !match);
     });
-    if (worksToggle && limite > 0) {
+    var passo = passoLavori();
+    if (worksAzioni && passo > 0) {
+      mostrati = Math.max(passo, mostrati);
       visibili.forEach(function (w, i) {
-        w.classList.toggle('is-hidden', !espanso && i >= limite);
+        w.classList.toggle('is-hidden', i >= mostrati);
       });
-      var serve = visibili.length > limite;
-      worksToggle.parentNode.hidden = !serve;
-      worksToggle.setAttribute('aria-expanded', String(espanso));
-      worksToggle.textContent = espanso
-        ? (worksToggle.getAttribute('data-testo-meno') || '')
-        : (worksToggle.getAttribute('data-testo-tutti') || '');
+      worksAzioni.hidden = visibili.length <= passo;
+      worksAltro.hidden = mostrati >= visibili.length;
+      worksMeno.hidden = mostrati <= passo;
     }
     if (emptyMsg) { emptyMsg.hidden = (visibili.length !== 0); }
   }
@@ -116,15 +122,36 @@
       btn.classList.add('is-active');
       btn.setAttribute('aria-pressed', 'true');
       categoria = btn.getAttribute('data-filter');
+      mostrati = passoLavori();      // cambiando categoria si riparte dalle prime schede
       aggiornaProgetti();
     });
   });
 
-  if (worksToggle) {
-    worksToggle.addEventListener('click', function () {
-      espanso = !espanso;
+  if (worksAzioni) {
+    worksAltro.addEventListener('click', function () {
+      var prima = mostrati;
+      mostrati += passoLavori();
       aggiornaProgetti();
+      // il focus va sulla prima scheda nuova, o sul bottone che resta
+      var nuove = [].filter.call(works, function (w) { return !w.classList.contains('is-hidden'); });
+      var prossima = nuove[prima] && nuove[prima].querySelector('button, a[href]');
+      if (prossima) { prossima.focus(); }
+      else if (worksAltro.hidden) { worksMeno.focus(); }
     });
+    worksMeno.addEventListener('click', function () {
+      mostrati = passoLavori();
+      aggiornaProgetti();
+      var sezione = doc.getElementById('lavori');
+      if (sezione && sezione.getBoundingClientRect().top < 0) {
+        var ridotto = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        sezione.scrollIntoView({ block: 'start', behavior: ridotto ? 'auto' : 'smooth' });
+      }
+      worksAltro.focus({ preventScroll: true });
+    });
+    // cambiando larghezza cambia il passo: si riparte dalle prime schede
+    var cambioSchermo = function () { mostrati = passoLavori(); aggiornaProgetti(); };
+    if (schermoLargo.addEventListener) { schermoLargo.addEventListener('change', cambioSchermo); }
+    else if (schermoLargo.addListener) { schermoLargo.addListener(cambioSchermo); }
   }
   aggiornaProgetti();
 

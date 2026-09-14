@@ -60,7 +60,7 @@ categoria_lavorativi: Lavorativi
 categoria_universitari: Universitari
 lavori_apri: Apri progetto
 lavori_dettaglio: Scopri di più
-lavori_mostra_tutti: Mostra tutti i progetti
+lavori_mostra_altro: Mostra altro
 lavori_mostra_meno: Mostra meno
 lavori_vuoto: Nessun progetto in questa categoria, per ora.
 modale_chiudi: Chiudi

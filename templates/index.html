@@ -60,9 +60,9 @@
 
       <nav class="nav-links" aria-label="{{T_NAV_ARIA}}">
         <a href="#chi-sono">{{T_NAV_CHI_SONO}}</a>
+        <a href="#letture">{{T_NAV_LETTURE}}</a>
         <a href="#progressi">{{T_NAV_PROGRESSI}}</a>
         <a href="#lavori">{{T_NAV_LAVORI}}</a>
-        <a href="#letture">{{T_NAV_LETTURE}}</a>
         <a href="#contatti">{{T_NAV_CONTATTI}}</a>
       </nav>
 
@@ -85,9 +85,9 @@
     <div class="mobile-menu" id="mobile-menu">
       <nav aria-label="{{T_NAV_ARIA_MOBILE}}">
         <a href="#chi-sono">{{T_NAV_CHI_SONO}}</a>
+        <a href="#letture">{{T_NAV_LETTURE}}</a>
         <a href="#progressi">{{T_NAV_PROGRESSI}}</a>
         <a href="#lavori">{{T_NAV_LAVORI}}</a>
-        <a href="#letture">{{T_NAV_LETTURE}}</a>
         <a href="#contatti">{{T_NAV_CONTATTI}}</a>
       </nav>
       <a class="btn btn-primary" href="https://cal.com/mattiabaldinazzo" target="_blank" rel="noopener">{{T_CTA_CALL}}</a>
@@ -133,27 +133,40 @@
             <p>{{T_CHI_SONO_P1}}</p>
             <p>{{T_CHI_SONO_P2}}</p>
             <p>{{T_CHI_SONO_P3}}</p>
-
-            <dl class="skills">
-              <div class="skill">
-                <dt>{{T_SKILL1_TITOLO}}</dt>
-                <dd>{{T_SKILL1_TESTO}}</dd>
-              </div>
-              <div class="skill">
-                <dt>{{T_SKILL2_TITOLO}}</dt>
-                <dd>{{T_SKILL2_TESTO}}</dd>
-              </div>
-              <div class="skill">
-                <dt>{{T_SKILL3_TITOLO}}</dt>
-                <dd>{{T_SKILL3_TESTO}}</dd>
-              </div>
-              <div class="skill">
-                <dt>{{T_SKILL4_TITOLO}}</dt>
-                <dd>{{T_SKILL4_TESTO}}</dd>
-              </div>
-            </dl>
           </div>
+
+          <dl class="skills reveal">
+            <div class="skill">
+              <dt>{{T_SKILL1_TITOLO}}</dt>
+              <dd>{{T_SKILL1_TESTO}}</dd>
+            </div>
+            <div class="skill">
+              <dt>{{T_SKILL2_TITOLO}}</dt>
+              <dd>{{T_SKILL2_TESTO}}</dd>
+            </div>
+            <div class="skill">
+              <dt>{{T_SKILL3_TITOLO}}</dt>
+              <dd>{{T_SKILL3_TESTO}}</dd>
+            </div>
+            <div class="skill">
+              <dt>{{T_SKILL4_TITOLO}}</dt>
+              <dd>{{T_SKILL4_TESTO}}</dd>
+            </div>
+          </dl>
         </div>
+      </div>
+    </section>
+
+    <!-- LETTURE -->
+    <section class="section" id="letture">
+      <div class="container">
+        <header class="section-head reveal">
+          <p class="eyebrow">{{T_NAV_LETTURE}}</p>
+          <h2 class="section-title">{{T_LETTURE_TITOLO}}</h2>
+          <p class="section-intro">{{T_LETTURE_INTRO}}</p>
+        </header>
+
+        {{BOOKS}}
       </div>
     </section>
 
@@ -194,19 +207,6 @@
         <p class="works-empty" data-works-empty hidden>{{T_LAVORI_VUOTO}}</p>
 
         {{WORKS_MORE}}
-      </div>
-    </section>
-
-    <!-- LETTURE -->
-    <section class="section" id="letture">
-      <div class="container">
-        <header class="section-head reveal">
-          <p class="eyebrow">{{T_NAV_LETTURE}}</p>
-          <h2 class="section-title">{{T_LETTURE_TITOLO}}</h2>
-          <p class="section-intro">{{T_LETTURE_INTRO}}</p>
-        </header>
-
-        {{BOOKS}}
       </div>
     </section>
 

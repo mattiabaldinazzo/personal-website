@@ -217,12 +217,17 @@ h1, h2, h3 {
 }
 .site-header.is-scrolled { border-bottom-color: var(--line); }
 
+/* L'header occupa tutta la larghezza della finestra, non la colonna del
+   testo: cosi' il monogramma sta al bordo sinistro e lingua piu' bottone al
+   bordo destro, come gia' avviene su telefono. */
 .nav {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   height: var(--header-h);
+  max-width: none;
 }
 .nav-end {
   display: flex;
@@ -523,8 +528,9 @@ section[id] { scroll-margin-top: max(0px, calc(var(--header-h) + 24px - var(--se
 /* La foto vive qui, accanto al testo: in questa posizione un rettangolo
    netto e' la norma e non deve fondersi con la pagina. */
 .about-grid { display: grid; gap: 1.75rem; }
+/* Su telefono la foto sta al centro della colonna. */
 .about-photo {
-  margin: 0;
+  margin: 0 auto;
   width: min(62vw, 260px);
 }
 .about-photo img {
@@ -701,7 +707,9 @@ section[id] { scroll-margin-top: max(0px, calc(var(--header-h) + 24px - var(--se
 }
 .work-card:hover .work-link::after { transform: translateX(3px); }
 
-.works-more { margin-top: 2.25rem; }
+.works-more { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2.25rem; }
+.works-more[hidden],
+.works-more [hidden] { display: none; }
 
 .works-empty {
   font-family: var(--font-mono);
@@ -815,6 +823,14 @@ html.js .progress.is-visible .progress-part:nth-child(4) .progress-fill { transi
   color: #2a6f35;
   background: rgba(47, 125, 59, 0.1);
   border-color: rgba(47, 125, 59, 0.3);
+}
+/* Etichetta scritta a mano: il colore arriva dal build come --pastiglia e
+   tinge testo, bordo e fondo. Senza colore resta una pastiglia neutra. */
+.progress-effort--libera {
+  --pastiglia: var(--ink-soft);
+  color: var(--pastiglia);
+  border-color: color-mix(in srgb, var(--pastiglia) 35%, transparent);
+  background: color-mix(in srgb, var(--pastiglia) 9%, transparent);
 }
 .progress-effort + .progress-desc { margin-top: 0.55rem; }
 
@@ -1296,10 +1312,15 @@ html.js .reveal.is-visible { opacity: 1; transform: none; }
      divide lo spazio libero in parti uguali, quindi la distanza tra il
      monogramma e la prima voce e' identica a quella tra l'ultima voce e il
      selettore di lingua. */
+  /* Il menu resta al centro della finestra qualunque sia la larghezza del
+     monogramma o del bottone: fuori dal flusso, ancorato a meta' pagina. */
   .nav-links {
     display: flex;
     gap: 1.5rem;
     white-space: nowrap;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
   }
   .nav-links a {
     font-size: 0.95rem;
@@ -1314,12 +1335,25 @@ html.js .reveal.is-visible { opacity: 1; transform: none; }
 }
 
 @media (min-width: 860px) {
+  /* Due colonne e due righe: la foto occupa la prima riga accanto ai
+     paragrafi e ne segue il centro; le competenze vanno sotto, nella colonna
+     del testo. */
   .about-grid {
     grid-template-columns: 244px 1fr;
-    gap: 2.75rem;
+    grid-template-rows: auto auto;
+    column-gap: 2.75rem;
+    row-gap: 0;
     align-items: start;
   }
-  .about-photo { width: 100%; }
+  .about-photo {
+    width: 100%;
+    margin: 0;
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+  }
+  .about-text { grid-column: 2; grid-row: 1; }
+  .skills { grid-column: 2; grid-row: 2; }
 }
 
 @media (min-width: 920px) {

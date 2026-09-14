@@ -47,7 +47,7 @@ Optional detail card text, in markdown.
 
 Regole:
 
-I primi 6 progetti sono visibili, gli altri compaiono con "Mostra tutti i progetti". La soglia è la costante `PROGETTI_VISIBILI` in `build.py`.
+All'inizio si vedono 3 progetti su schermo largo e 2 su telefono, cioè una riga della griglia. "Mostra altro" ne aggiunge altrettanti a ogni clic e "Mostra meno", presente dal primo clic, torna alla riga iniziale. Le soglie sono le costanti `PROGETTI_VISIBILI` e `PROGETTI_VISIBILI_MOBILE` in `build.py`. Cambiando filtro o larghezza dello schermo il conteggio riparte dalla prima riga; senza JavaScript si vedono tutti i progetti.
 
 `titolo`, `categoria`, `descrizione` sono obbligatori. `categoria` può essere `personali`, `lavorativi`, `universitari` o una nuova: i filtri si aggiornano da soli. `immagine` è facoltativa: senza, la card mostra il titolo su fondo scuro. Se il file ha un corpo sotto il secondo `---`, la card apre la scheda di dettaglio (il `link` compare come bottone in fondo). Se non ha corpo, la card apre direttamente il `link`. Ogni scheda di dettaglio ha un URL diretto: `https://mattiabaldinazzo.it/#progetto-nome-progetto`.
 
@@ -113,7 +113,7 @@ Se scrivi una sola `--- parte ---`, il sito mostra la forma semplice: il totale 
 
 La riga dell'avanzamento totale mostra soltanto la percentuale, mai una quota o un'unità: le parti possono contare cose diverse (lezioni, video, capitoli) e sommarle in una sola etichetta non avrebbe senso.
 
-### Colore della barra ed etichetta di sforzo
+### Colore della barra ed etichetta
 
 Due campi facoltativi, validi sia nel frontmatter dell'argomento sia dentro una `--- parte ---`.
 
@@ -124,7 +124,17 @@ sforzo: alto
 
 `colore` cambia la barra di completamento e si scrive in esadecimale, con o senza abbreviazione (`#7A3E9D` o `#7A9`). Scritto nel frontmatter vale per la barra del totale e per tutte le parti che non ne indicano uno proprio; scritto dentro una parte vale solo per quella. Senza il campo la barra usa il blu del sito. Un valore che non è un esadecimale blocca il build.
 
-`sforzo` aggiunge sotto al titolo una pastiglia colorata e accetta solo `alto`, `medio` o `basso`. I testi sono nei file delle lingue, chiavi `sforzo_alto`, `sforzo_medio` e `sforzo_basso`: oggi dicono "Più difficile del previsto", "Fattibile dai" e "La smarchiamo facilmente", in inglese "High effort", "Moderate effort" e "Low effort". Cambiali lì se vuoi altre formule. Il colore accompagna la lettura ma l'informazione sta nel testo, così resta chiara anche a chi i colori non li distingue.
+`etichetta` e `etichetta_colore` mettono sotto al titolo una pastiglia con il testo che vuoi:
+
+```markdown
+etichetta: La smarchiamo facilmente
+etichetta_en: Easy win
+etichetta_colore: "#2F7D3B"
+```
+
+`etichetta` è testo libero, `etichetta_en` la sua versione inglese (senza, il sito inglese usa quella italiana) e `etichetta_colore` un esadecimale che tinge testo, bordo e fondo della pastiglia. Senza colore la pastiglia resta neutra; un valore che non è un esadecimale blocca il build. Valgono nel frontmatter dell'argomento e dentro una `--- parte ---`, come `colore`.
+
+`sforzo` è l'alternativa a testo fisso, usata solo quando `etichetta` è vuota: aggiunge la stessa pastiglia e accetta solo `alto`, `medio` o `basso`. I testi sono nei file delle lingue, chiavi `sforzo_alto`, `sforzo_medio` e `sforzo_basso`: oggi dicono "Più difficile del previsto", "Fattibile dai" e "La smarchiamo facilmente", in inglese "High effort", "Moderate effort" e "Low effort". Cambiali lì se vuoi altre formule. Il colore accompagna la lettura ma l'informazione sta nel testo, così resta chiara anche a chi i colori non li distingue.
 
 ## Aggiungere un libro
 

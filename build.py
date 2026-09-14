@@ -54,8 +54,12 @@ STATIC_FILES = [
 STATIC_DIRS = ["images", "fonts", "jet_converter"]
 
 # Quanti elementi restano visibili prima del bottone "Mostra tutti"
-PROGETTI_VISIBILI = 6
 PROGRESSI_VISIBILI = 4
+# Lavori: quante schede si vedono all'inizio e quante ne aggiunge ogni
+# "Mostra altro". Su schermo largo la griglia ha tre colonne, su telefono due:
+# cosi' ogni clic riempie righe intere.
+PROGETTI_VISIBILI = 3
+PROGETTI_VISIBILI_MOBILE = 2
 
 # Libreria: righe visibili all'apertura e righe aggiunte da ogni "Mostra altro".
 # Su schermo largo una riga e' una mensola.
@@ -867,6 +871,26 @@ def leggi_colore(campi, origine, etichetta):
     return grezzo
 
 
+def leggi_etichetta(campi, suffisso=""):
+    """Testo libero della pastiglia sotto il titolo. Vuoto: nessuna pastiglia."""
+    return campi.get("etichetta" + suffisso, "").strip()
+
+
+def leggi_etichetta_colore(campi, origine, posizione):
+    """Colore della pastiglia, in esadecimale. Vuoto: tinta neutra."""
+    grezzo = campi.get("etichetta_colore", "").strip()
+    if not grezzo:
+        return ""
+    if not COLORE_HEX.match(grezzo):
+        errore("%s%s: 'etichetta_colore' deve essere un esadecimale tipo #2F7D3B (trovato: %r)"
+               % (origine.name, posizione, grezzo))
+        return ""
+    cifre = grezzo.lstrip("#")
+    if len(cifre) == 3:
+        cifre = "".join(c * 2 for c in cifre)
+    return "#" + cifre.upper()
+
+
 def leggi_sforzo(campi, origine, etichetta):
     """Quanto costa fatica: alto, medio o basso. Vuoto significa: nessuna
     etichetta."""
@@ -949,6 +973,9 @@ def carica_progressi():
                     "quota": "%s/%s" % (testo_numero(raggiunto), testo_numero(totale)),
                     "colore": leggi_colore(campi, f, etichetta) or leggi_colore(meta, f, ""),
                     "sforzo": leggi_sforzo(campi, f, etichetta),
+                    "etichetta": {lingua: leggi_etichetta(campi, "" if lingua == "it" else "_en")
+                                  or leggi_etichetta(campi) for lingua, _ in LINGUE},
+                    "etichetta_colore": leggi_etichetta_colore(campi, f, etichetta),
                 })
             if not parti or somma_totale <= 0:
                 continue
@@ -974,6 +1001,9 @@ def carica_progressi():
                 "parti": parti,
                 "colore": leggi_colore(meta, f, ""),
                 "sforzo": leggi_sforzo(meta, f, ""),
+                "etichetta": {lingua: leggi_etichetta(meta, "" if lingua == "it" else "_en")
+                              or leggi_etichetta(meta) for lingua, _ in LINGUE},
+                "etichetta_colore": leggi_etichetta_colore(meta, f, ""),
             })
             continue
 
@@ -994,6 +1024,9 @@ def carica_progressi():
             "parti": [],
             "colore": leggi_colore(meta, f, ""),
             "sforzo": leggi_sforzo(meta, f, ""),
+            "etichetta": {lingua: leggi_etichetta(meta, "" if lingua == "it" else "_en")
+                          or leggi_etichetta(meta) for lingua, _ in LINGUE},
+            "etichetta_colore": leggi_etichetta_colore(meta, f, ""),
         })
     return voci
 
@@ -1068,9 +1101,9 @@ def render_progetti(progetti, lingua, T):
                       % (esc(p["link"]), media, corpo_scheda))
         else:
             scheda = '<div class="work-card work-card--static">%s%s</div>' % (media, corpo_scheda)
-        nascosto = " is-hidden" if i > PROGETTI_VISIBILI else ""
-        schede.append('<li class="work reveal%s" data-category="%s">%s</li>'
-                      % (nascosto, esc(p["categoria"]), scheda))
+        # nessuna scheda nasce nascosta: senza JavaScript si vedono tutte
+        schede.append('<li class="work reveal" data-category="%s">%s</li>'
+                      % (esc(p["categoria"]), scheda))
     return "\n\n          ".join(schede)
 
 
@@ -1106,13 +1139,16 @@ def render_modali(progetti, lingua, T):
 
 
 def render_toggle_progetti(progetti, T):
-    if len(progetti) <= PROGETTI_VISIBILI:
+    """I due bottoni dei lavori. Nascono nascosti: li mostra main.js solo se
+    le schede superano la soglia, che dipende dalla larghezza dello schermo."""
+    if len(progetti) <= PROGETTI_VISIBILI_MOBILE:
         return ""
-    return ('<div class="works-more reveal">\n'
-            '          <button class="btn btn-ghost" type="button" data-works-toggle aria-expanded="false"\n'
-            '                  data-limite="%d" data-testo-tutti="%s" data-testo-meno="%s">%s</button>\n'
-            '        </div>' % (PROGETTI_VISIBILI, esc(T["lavori_mostra_tutti"]),
-                                esc(T["lavori_mostra_meno"]), esc(T["lavori_mostra_tutti"])))
+    return ('<div class="works-more reveal" data-works-azioni hidden'
+            ' data-passo="%d" data-passo-mobile="%d">\n'
+            '          <button class="btn btn-ghost" type="button" data-works-altro>%s</button>\n'
+            '          <button class="btn btn-ghost" type="button" data-works-meno hidden>%s</button>\n'
+            '        </div>' % (PROGETTI_VISIBILI, PROGETTI_VISIBILI_MOBILE,
+                                esc(T["lavori_mostra_altro"]), esc(T["lavori_mostra_meno"])))
 
 
 def spessore_dorso(pagine):
@@ -1433,9 +1469,17 @@ def barra(percento, etichetta, colore="", piccola=False):
                "lab": esc(etichetta), "stile": esc(stile)})
 
 
-def etichetta_sforzo(sforzo, T):
-    """Pastiglia colorata che dice quanta fatica costa. Il colore da solo non
-    basta a chi non lo distingue, quindi l'informazione sta nel testo."""
+def pastiglia(voce, lingua, T):
+    """Pastiglia sotto il titolo del progresso. Vince l'etichetta scritta a
+    mano; senza quella vale il campo 'sforzo' con i suoi tre testi fissi.
+    Il colore da solo non basta a chi non lo distingue, quindi l'informazione
+    sta sempre nel testo."""
+    testo = voce.get("etichetta", {}).get(lingua, "")
+    if testo:
+        colore = voce.get("etichetta_colore", "")
+        stile = ' style="--pastiglia:%s"' % colore if colore else ""
+        return '<p class="progress-effort progress-effort--libera"%s>%s</p>\n' % (stile, esc(testo))
+    sforzo = voce.get("sforzo", "")
     if not sforzo:
         return ""
     return ('<p class="progress-effort progress-effort--%s">%s</p>\n'
@@ -1466,7 +1510,7 @@ def render_progressi(voci, lingua, T):
                     % {"titolo": esc(titolo_parte),
                        "quota": esc(quota_con_unita(parte, lingua)),
                        "pct": parte["percento"],
-                       "sforzo": etichetta_sforzo(parte["sforzo"], T),
+                       "sforzo": pastiglia(parte, lingua, T),
                        "desc": esc(campo(parte["meta"], "descrizione", lingua)),
                        "barra": barra(parte["percento"], "%s, %s" % (titolo, titolo_parte),
                                       parte["colore"], piccola=True)}
@@ -1488,7 +1532,7 @@ def render_progressi(voci, lingua, T):
                 '          </li>'
                 % {"nascosto": nascosto, "titolo": esc(titolo),
                    "totale": esc(T["progressi_totale"]), "pct": v["percento"],
-                   "sforzo": etichetta_sforzo(v["sforzo"], T),
+                   "sforzo": pastiglia(v, lingua, T),
                    "intro": ('            <p class="progress-desc">%s</p>\n' % esc(intro)) if intro else "",
                    "barra": barra(v["percento"], "%s, %s" % (titolo, T["progressi_totale"]), v["colore"]),
                    "parti": "\n              ".join(parti_html)}
@@ -1508,7 +1552,7 @@ def render_progressi(voci, lingua, T):
             '          </li>'
             % {"nascosto": nascosto, "titolo": esc(titolo),
                "quota": esc(quota_con_unita(v, lingua)), "pct": v["percento"],
-               "sforzo": etichetta_sforzo(v["sforzo"], T),
+               "sforzo": pastiglia(v, lingua, T),
                "desc": esc(campo(v["meta"], "descrizione", lingua)),
                "barra": barra(v["percento"], titolo, v["colore"])}
         )
