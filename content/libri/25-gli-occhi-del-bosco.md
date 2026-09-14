@@ -1,0 +1,12 @@
+---
+titolo: Gli occhi del bosco
+autore: Mauro Corona
+voto: 4
+copertina: /images/books/gli_occhi_del_bosco.webp
+pagine: 816
+formato: tascabile
+isbn: 978-8804765905
+---
+Al centro della poetica di Mauro Corona c'è il legame indissolubile tra l'uomo e la natura. Legame che le abitudini di vita metropolitane sembrano negare, ma che non può sfuggire all'uomo dei boschi e delle montagne, abituato ad ascoltare i racconti delle rocce su cui arrampica, del legno che intaglia, dello stormire degli alberi e delle orme degli animali. Abituato a guardare le creature del bosco negli occhi. Perché il bosco è magico, ha i suoi mille occhi e le sue mille voci. Bisogna essere persone speciali per saperle ascoltare. Mauro Corona proprio da quegli occhi e da quelle voci ha raccolto le storie di quando il mondo era giovane, la puzzola vanitosa, il riccio liscio e il ghiro insonne... fino ad arrivare a capire che molto meglio degli uomini gli animali conoscono il mistero della vita e della morte. E possono insegnarcelo. Un volume che raccoglie due amatissimi libri di Corona – Cani, camosci, cuculo (e un corvo) e Storie del bosco antico – e che vive del respiro delle creature, offrendo il ritratto di un mondo duro e poetico, animato di una sapienza antica e indispensabile.
+--- en ---
+At the heart of Mauro Corona’s work lies the unbreakable bond between man and nature—a connection often denied by metropolitan lifestyles but inescapable for the man of the woods and mountains, who is accustomed to listening to the tales told by the rocks he climbs, the wood he carves, the rustling trees, and the tracks of animals. He is a man used to looking the creatures of the forest in the eye. For the forest is magical, possessing a thousand eyes and a thousand voices; it takes a special kind of person to hear them. It is precisely from those eyes and voices that Mauro Corona gathered stories from when the world was young—tales of the vain polecat, the smooth hedgehog, and the sleepless dormouse—ultimately realizing that animals understand the mystery of life and death far better than humans do. And they can teach it to us. This volume brings together two of Corona’s best-loved books—*Cani, camosci, cuculo (e un corvo)* and *Storie del bosco antico*—and breathes with the life of these creatures, offering a portrait of a world that is both harsh and poetic, animated by an ancient and essential wisdom.

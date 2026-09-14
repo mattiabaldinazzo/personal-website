@@ -1,0 +1,12 @@
+---
+titolo: La via del sole
+autore: Mauro Corona
+voto: 4
+copertina: /images/books/la_via_del_sole.webp
+pagine: 168
+formato: tascabile
+isbn: 978-8804741770
+---
+Di ottima famiglia, ricchissimo e anche piuttosto affascinante, a nemmeno trent'anni il protagonista di questo romanzo è già uno stimato ingegnere cui non manca davvero nulla: ville, automobili, ma anche amici, donne e salute. Un eccesso di cose per lui sempre più opprimente. È per questo che di punto in bianco decide di dare una svolta radicale alla sua esistenza abbandonando il lavoro e rinunciando a ogni comodità per andare a vivere in una baita di montagna. Evocando le memorie dell'infanzia, scopre tra i ricordi visioni di cime lontane, limpide sorgenti, ruscelli canterini, pascoli verdi e soprattutto cascate lucenti di sole. Ma una volta tra i monti, dove finalmente può dedicarsi incessantemente alla contemplazione della palla infuocata, si accorge che le ore di luce a sua disposizione non gli bastano più... Con la sua scrittura caustica e sferzante, Mauro Corona torna a dare voce all'epica della montagna con un grande racconto morale, una riflessione di assoluta attualità sul rapporto tra uomo e natura e una meditazione senza tempo sugli inganni del desiderio.
+--- en ---
+Hailing from a distinguished, wealthy family and possessing considerable charm, the protagonist of this novel—not yet thirty—is already a respected engineer who lacks for nothing: villas and cars, yes, but also friends, women, and good health. Yet, this surfeit of possessions feels increasingly oppressive to him. That is why, quite abruptly, he decides to radically transform his life, quitting his job and forsaking every comfort to live in a mountain cabin. As childhood memories resurface, he recalls visions of distant peaks, clear springs, singing brooks, green pastures, and—above all—waterfalls glistening in the sun. Yet, once in the mountains—where he can finally devote himself unceasingly to contemplating that fiery orb—he realizes that the daylight hours at his disposal are no longer enough... With his caustic, biting prose, Mauro Corona once again gives voice to the epic of the mountains in a powerful moral tale: a highly topical reflection on the relationship between man and nature, and a timeless meditation on the deceptions of desire.

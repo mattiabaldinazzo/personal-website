@@ -28,6 +28,9 @@ scrum
 arricchirsi-con-onore
 tecniche-di-resistenza-interiore: copertina
 decorazione: mappamondo.webp, 90%
+uomo-e-gentiluomo: disteso
+la-grande-via-del-samurai: disteso
+12-regole-per-la-vita: disteso
 the-lean-startup: disteso
 il-mio-primo-milione-di-dollari: disteso
 21-giorni-per-una-grande-idea
@@ -37,5 +40,8 @@ decorazione: nave.webp, 74%
 --- mensola ---
 arrampicare
 nel-legno-e-nella-pietra
+la-via-del-sole
+gli-occhi-del-bosco
 gentiluomo-in-mare
+isolario-italiano
 decorazione: vaso.webp, 70%
