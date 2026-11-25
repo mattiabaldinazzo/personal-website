@@ -51,7 +51,7 @@ STATIC_FILES = [
     "styles.css", "main.js", "favicon.svg", "favicon.ico",
     "robots.txt", "CNAME", "cv.pdf",
 ]
-STATIC_DIRS = ["images", "fonts", "jet_converter"]
+STATIC_DIRS = ["images", "fonts"]
 
 # Quanti elementi restano visibili prima del bottone "Mostra tutti"
 PROGRESSI_VISIBILI = 4
